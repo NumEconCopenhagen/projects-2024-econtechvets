@@ -1,9 +1,8 @@
-# \[Group name\]
+# \[EconTechVets\]
 
 **Group members:**
-- A
-- B
-- C
+- Rasmus Darling Wegener, hgs252
+- Frederik Nellerod Nordentoft, hnw220
 
 This repository contains  
 1. Inaugural project. 
