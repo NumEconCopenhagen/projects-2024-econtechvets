@@ -75,3 +75,24 @@ class InauguralProjectClass:
                 market_clearing_price = p1
 
         return market_clearing_price #Returns the market clearing price
+    
+    def maximize_aggregate_utility(self):
+        max_utility = float('-inf')
+        optimal_x1A = None
+        optimal_x2A = None
+
+        for x1A in np.linspace(0, 1, 101):  # 101 points between 0 and 1
+            for x2A in np.linspace(0, 1, 101):
+                utility = self.utility_A(x1A, x2A) + self.utility_B(1 - x1A, 1 - x2A)
+                if utility > max_utility:
+                    max_utility = utility
+                    optimal_x1A = x1A
+                    optimal_x2A = x2A
+
+        return optimal_x1A, optimal_x2A
+
+    def calculate_allocation(self, x1A, x2A):
+        x1B = 1 - x1A
+        x2B = 1 - x2A
+
+        return x1A, x1B, x2A, x2B
