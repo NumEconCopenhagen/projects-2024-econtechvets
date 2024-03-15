@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+# define the class
 
 class InauguralProjectClass: 
 
