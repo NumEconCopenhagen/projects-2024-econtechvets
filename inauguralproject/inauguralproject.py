@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-# define the class
+import numpy as np 
 
 class InauguralProjectClass: 
 
@@ -42,10 +42,36 @@ class InauguralProjectClass:
 
         par = self.par
 
-        x1A,x2A = self.demand_A(p1)
-        x1B,x2B = self.demand_B(p1)
+        x1A = self.demand_A(p1)
+        x1B = self.demand_B(p1)
+        x2A = self.demand_A(par.p2)
+        x2B = self.demand_B(par.p2)
 
         eps1 = x1A-par.w1A + x1B-(1-par.w1A)
         eps2 = x2A-par.w2A + x2B-(1-par.w2A)
 
         return eps1,eps2
+    
+    def calculate_market_clearing_errors(self, P1): #market clearing errors
+        errors = []
+
+        for p1 in P1:
+            eps1, eps2 = self.check_market_clearing(p1)
+            error = abs(eps1) + abs(eps2)
+            errors.append(error)
+
+        return errors
+    
+    def find_market_clearing_price(self, P1): # Finding the market clearing price that minimizes the sum of the market clearing errors 
+        min_error = float('inf')
+        market_clearing_price = None
+
+        for p1 in P1: #Iterates over each p1 value in the set P1 and checks the market clearing errors
+            eps1, eps2 = self.check_market_clearing(p1)
+            error = abs(eps1) + abs(eps2)
+
+            if error < min_error: #If the error is smaller than the current minimum error, the error becomes the new minimum error and the market clearing price becomes the new p1 value
+                min_error = error
+                market_clearing_price = p1
+
+        return market_clearing_price #Returns the market clearing price
