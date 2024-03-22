@@ -75,7 +75,7 @@ class InauguralProjectClass:
                 min_error = error 
                 market_clearing_price = p1 
 
-        return market_clearing_price #Returns the market clearing price
+        return market_clearing_price, min_error #Returns the market clearing price
 
     def maximize_aggregate_utility(self):
         max_utility = float('-inf')
