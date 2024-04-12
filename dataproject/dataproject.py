@@ -159,3 +159,48 @@ def plot_share_data(df):
     )
 
     fig.show()
+
+
+#code for making a graph of share of players in population across regions
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+def plot_share_data(df):
+    # Creating subplots: one row, three columns
+    fig = make_subplots(rows=1, cols=3, subplot_titles=("Men", "Women", "Sex, total"))
+
+    # Define a color map for each unique region
+    colors = {region: f'rgb({hash(region) % 256}, {hash(region * 2) % 256}, {hash(region * 3) % 256})' for region in df['region'].unique()}
+
+    # Filter and plot data for Men
+    men_df = df[df['sex'] == 'Men']
+    for region, group in men_df.groupby('region'):
+        fig.add_trace(go.Scatter(x=group['year'], y=group['share'], mode='lines+markers', name=region, marker=dict(color=colors[region])), row=1, col=1)
+
+    # Filter and plot data for Women
+    women_df = df[df['sex'] == 'Women']
+    for region, group in women_df.groupby('region'):
+        fig.add_trace(go.Scatter(x=group['year'], y=group['share'], mode='lines+markers', name=region, showlegend=False, marker=dict(color=colors[region])), row=1, col=2)
+
+    # Filter and plot data for Sex, total
+    total_df = df[df['sex'] == 'Sex, total']
+    for region, group in total_df.groupby('region'):
+        fig.add_trace(go.Scatter(x=group['year'], y=group['share'], mode='lines+markers', name=region, showlegend=False, marker=dict(color=colors[region])), row=1, col=3)
+
+    # Remove the x-axis title
+    fig.update_xaxes(title_text="", row=1, col=1)
+    fig.update_xaxes(title_text="", row=1, col=2)
+    fig.update_xaxes(title_text="", row=1, col=3)
+
+    # Update yaxis properties
+    fig.update_yaxes(title_text="Share of Players (%)", row=1, col=1)
+    fig.update_yaxes(title_text="Share of Players (%)", row=1, col=2)
+    fig.update_yaxes(title_text="Share of Players (%)", row=1, col=3)
+
+    # Update layout, position the legend below the graph, and disable interactivity
+    fig.update_layout(title_text='Share of Players in Population by Region and Sex',
+                      showlegend=True,
+                      legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5, traceorder="normal", tracegroupgap=0, itemclick=False, itemdoubleclick=False))
+
+    fig.show()
