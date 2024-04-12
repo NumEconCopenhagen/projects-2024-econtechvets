@@ -3,6 +3,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # Making the stacked bar chart for total players and calling it in the notebook when wanting to display it
 def total_players_dk(df, filename='stacked_bar_chart.png'):
@@ -26,32 +28,34 @@ def index_players_dk(df, base_year=2014, filename='indexed_players_chart.png'):
 
     # Filter data for 'All Denmark'
     denmark_data = df[df['region'] == 'All Denmark']
-    
-    # Pivot the data
-    pivot_data = denmark_data.pivot(index='year', columns='sex', values='players')
-    
-    # Check if the base year exists in the index
-    if base_year in pivot_data.index:
-        # Calculate the index (base_year = 100)
-        for column in pivot_data.columns:
-            pivot_data[column] = pivot_data[column] / pivot_data.at[base_year, column] * 100
-    else:
-        print(f"Base year {base_year} not found in data.")
-        return  # Exit the function if base year is not found
 
-    # Create the plot
-    ax = pivot_data.plot(kind='line', figsize=(10, 7))
-    
+    # Pivot the player data
+    pivot_data = denmark_data.pivot(index='year', columns='sex', values='players')
+
+    # Calculate the index (base_year = 100) for players
+    base_values = pivot_data.loc[base_year]
+    pivot_data = pivot_data / base_values * 100
+
+    # Extract and index the population data for 'Sex, total'
+    population_data = denmark_data[denmark_data['sex'] == 'Sex, total'].set_index('year')['population']
+    population_index = population_data / population_data.loc[base_year] * 100
+
+    # Create the plot for indexed values
+    ax = pivot_data[['Men', 'Women', 'Sex, total']].plot(kind='line', figsize=(10, 7))
+
+    # Plot the indexed population with a stippled (dashed) line
+    population_index.plot(ax=ax, linestyle='--', color='k', label='Population')
+
     # Set the title and labels
-    plt.title(f'Indexed Development of Players by Sex in All Denmark')
-    plt.xlabel('Year')
-    plt.ylabel('Index (Base Year = 100)')
-    
-    # Adjust the legend labels
-    ax.legend(title='')
-    
+    ax.set_title('Indexed Development of Players and Population in All Denmark (Base Year: 2014)')
+    ax.set_xlabel('Year')
+    ax.set_ylabel('Index (2014 = 100)')
+
+    # Adjust the legend
+    ax.legend(title='Category')
+
     plt.tight_layout()
-    
+
     # Save the figure
     plt.savefig(filename)
     plt.close()
@@ -85,3 +89,73 @@ def plot_growth_contributions_all_denmark(df, filename='growth_contributions_all
     # Save the figure
     plt.savefig(filename)
     plt.close()
+
+def process_data(df):
+    filtered_df = df[df['sex'] == 'Sex, total']
+    grouped_df = filtered_df.groupby(['region', 'year'])['players'].sum().reset_index()
+    
+    # Normalize the data to index it to the year 2014 for each region
+    for region in grouped_df['region'].unique():
+        base_value = grouped_df[(grouped_df['region'] == region) & (grouped_df['year'] == 2014)]['players'].values[0]
+        grouped_df.loc[grouped_df['region'] == region, 'indexed_players'] = grouped_df[grouped_df['region'] == region]['players'] / base_value * 100
+    
+    return grouped_df
+
+def plot_data(df):
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    for region in df['region'].unique():
+        region_data = df[df['region'] == region]
+        fig.add_trace(
+            go.Scatter(
+                x=region_data['year'], 
+                y=region_data['indexed_players'], 
+                name=region,
+                mode='lines+markers',
+            )
+        )
+
+    fig.update_layout(
+        title='Indexed Number of Players per Region Across Years',
+        xaxis_title='Year',
+        yaxis_title='Indexed Number of Players (2014 = 100)',
+        legend_title='Region',
+    )
+
+    fig.show()
+
+def process_data_for_shares(df):
+    # Calculate the share of players for each region's population
+    df['player_share'] = df['players'] / df['population'] * 100
+    return df
+
+#Making a graph of shared data
+def calculate_player_share(df):
+    # Calculate the share of players for each row
+    df['player_share'] = df['players'] / df['population'] * 100
+    return df
+
+def plot_share_data(df):
+    # Create a figure using make_subplots to enable multiple lines (one for each region)
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # Add a line for each region
+    for region in df['region'].unique():
+        region_data = df[df['region'] == region]
+        fig.add_trace(
+            go.Scatter(
+                x=region_data['year'], 
+                y=region_data['player_share'], 
+                name=region,
+                mode='lines+markers',
+            )
+        )
+
+    # Update the layout
+    fig.update_layout(
+        title='Share of Players in Population per Region',
+        xaxis_title='Year',
+        yaxis_title='Share of Players (%)',
+        legend_title='Region',
+    )
+
+    fig.show()
