@@ -146,51 +146,16 @@ def plot_data(df):
 
     fig.show()
 
-##
-#### Frenor: Hvor meget af det nedenstående kode bruger vi? Skal vi slette noget af det?
-##
 
-def process_data_for_shares(df):
-    # Calculate the share of players for each region's population
-    df['player_share'] = df['players'] / df['population'] * 100
-    return df
-
-#Making a graph of shared data
-def calculate_player_share(df):
-    # Calculate the share of players for each row
-    df['player_share'] = df['players'] / df['population'] * 100
-    return df
-
-#def plot_share_data(df):
-    # Create a figure using make_subplots to enable multiple lines (one for each region)
-    #fig = make_subplots(specs=[[{"secondary_y": True}]])
-
-    # Add a line for each region
-    #for region in df['region'].unique():
-    #    region_data = df[df['region'] == region]
-     #   fig.add_trace(
-      #      go.Scatter(
-       #         x=region_data['year'], 
-        #        y=region_data['player_share'], 
-         #       name=region,
-          #      mode='lines+markers',
-           # )
-       # )
-
-    # Update the layout
-    #fig.update_layout(
-     #   title='Share of Players in Population per Region',
-      #  xaxis_title='Year',
-       # yaxis_title='Share of Players (%)',
-        #legend_title='Region',
-   # )
-
-    #fig.show()
-
-
-#code for making a graph of share of players in population across regions
+"""
+code for making a graph of share of players in population across regions
+First we need to calculate the share of players in the population and the we create the plots.
+"""
 def plot_share_data(df):
-    # Creating subplots: one row, three columns
+    #calculating the shares
+    df['share'] = (df['players'] / df['population']) * 100
+
+    # Create subplots: one row, three columns
     fig = make_subplots(rows=1, cols=3, subplot_titles=("Men", "Women", "Sex, total"))
 
     # Define a color map for each unique region
@@ -211,19 +176,17 @@ def plot_share_data(df):
     for region, group in total_df.groupby('region'):
         fig.add_trace(go.Scatter(x=group['year'], y=group['share'], mode='lines+markers', name=region, showlegend=False, marker=dict(color=colors[region])), row=1, col=3)
 
-    # Remove the x-axis title
-    fig.update_xaxes(title_text="", row=1, col=1)
-    fig.update_xaxes(title_text="", row=1, col=2)
-    fig.update_xaxes(title_text="", row=1, col=3)
-
-    # Update yaxis properties
-    fig.update_yaxes(title_text="Share of Players (%)", row=1, col=1)
-    fig.update_yaxes(title_text="Share of Players (%)", row=1, col=2)
-    fig.update_yaxes(title_text="Share of Players (%)", row=1, col=3)
-
-    # Update layout, position the legend below the graph, and disable interactivity
-    fig.update_layout(title_text='Share of Players in Population by Region and Sex',
-                      showlegend=True,
-                      legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5, traceorder="normal", tracegroupgap=0, itemclick=False, itemdoubleclick=False))
-
+    # Update layout
+    fig.update_layout(
+        title='Share of Players in Population by Region and Sex',
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.3,
+            xanchor="center",
+            x=0.5,
+            itemclick="toggleothers"
+        )
+    )
     fig.show()
