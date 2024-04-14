@@ -6,7 +6,11 @@ import matplotlib.ticker as mtick
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# Making the stacked bar chart for total players and calling it in the notebook when wanting to display it
+
+"""
+The function total_players_dk saves a figure of a stacked bar chart 
+showing the total number of football players in Denmark by sex.
+"""
 def total_players_dk(df, filename='stacked_bar_chart.png'):
     denmark_data = df[(df['region'] == 'All Denmark') & (df['sex'] != 'Sex, total')]
     pivot_data = denmark_data.pivot(index='year', columns='sex', values='players')
@@ -21,7 +25,12 @@ def total_players_dk(df, filename='stacked_bar_chart.png'):
     plt.savefig(filename)
     plt.close()
 
-# Making the graph for indexed football players and calling it in the notebook when wanting to display it
+
+"""
+The function index_players_dk saves the figure indexed_players_chart.png in a line chart
+showing the indexed values of football players across sex in Denmark from 2014-2022.
+It also contains a dashed line of the indexed population.
+"""
 def index_players_dk(df, base_year=2014, filename='indexed_players_chart.png'):
     # Ensure 'year' is of type int
     df['year'] = df['year'].astype(int)
@@ -43,11 +52,11 @@ def index_players_dk(df, base_year=2014, filename='indexed_players_chart.png'):
     # Create the plot for indexed values
     ax = pivot_data[['Men', 'Women', 'Sex, total']].plot(kind='line', figsize=(10, 7))
 
-    # Plot the indexed population with a stippled (dashed) line
+    # Plot the indexed population with a dashed line
     population_index.plot(ax=ax, linestyle='--', color='k', label='Population')
 
     # Set the title and labels
-    ax.set_title('Indexed Development of Players and Population in All Denmark (Base Year: 2014)')
+    ax.set_title('Indexed Development of Players and Population in All Denmark')
     ax.set_xlabel('Year')
     ax.set_ylabel('Index (2014 = 100)')
 
@@ -60,7 +69,11 @@ def index_players_dk(df, base_year=2014, filename='indexed_players_chart.png'):
     plt.savefig(filename)
     plt.close()
 
-# Making the growth contribution graph and calling it in the notebook when wanting to display it
+
+"""
+The function plot_growth_contributions_all_denmark saves the figure growth_contribution_all_denmark in a stacked bar chart 
+showing the year-over-year change in the number of football players by sex in Denmark.
+"""
 def plot_growth_contributions_all_denmark(df, filename='growth_contributions_all_denmark.png'):
     # Filter for 'All Denmark'
     df_dk = df[df['region'] == 'All Denmark']
@@ -90,6 +103,11 @@ def plot_growth_contributions_all_denmark(df, filename='growth_contributions_all
     plt.savefig(filename)
     plt.close()
 
+"""
+The function process_data takes a DataFrame df as input and returns a new DataFrame 
+with the indexed number of players per region across years.
+It is used as a funciton with our merged_df dataset in the notebook to calculate the indexed number of players across regions.
+"""
 def process_data(df):
     filtered_df = df[df['sex'] == 'Sex, total']
     grouped_df = filtered_df.groupby(['region', 'year'])['players'].sum().reset_index()
@@ -101,6 +119,11 @@ def process_data(df):
     
     return grouped_df
 
+
+"""
+The function plot_data creates a line chart showing the indexed number of players per region across years.
+It is used as a function in the notebook to plot the indexed number of players across regions.
+"""
 def plot_data(df):
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     for region in df['region'].unique():
@@ -122,6 +145,10 @@ def plot_data(df):
     )
 
     fig.show()
+
+##
+#### Frenor: Hvor meget af det nedenstående kode bruger vi? Skal vi slette noget af det?
+##
 
 def process_data_for_shares(df):
     # Calculate the share of players for each region's population
