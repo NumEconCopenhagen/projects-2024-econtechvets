@@ -161,38 +161,34 @@ def calculate_player_share(df):
     df['player_share'] = df['players'] / df['population'] * 100
     return df
 
-def plot_share_data(df):
+#def plot_share_data(df):
     # Create a figure using make_subplots to enable multiple lines (one for each region)
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    #fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     # Add a line for each region
-    for region in df['region'].unique():
-        region_data = df[df['region'] == region]
-        fig.add_trace(
-            go.Scatter(
-                x=region_data['year'], 
-                y=region_data['player_share'], 
-                name=region,
-                mode='lines+markers',
-            )
-        )
+    #for region in df['region'].unique():
+    #    region_data = df[df['region'] == region]
+     #   fig.add_trace(
+      #      go.Scatter(
+       #         x=region_data['year'], 
+        #        y=region_data['player_share'], 
+         #       name=region,
+          #      mode='lines+markers',
+           # )
+       # )
 
     # Update the layout
-    fig.update_layout(
-        title='Share of Players in Population per Region',
-        xaxis_title='Year',
-        yaxis_title='Share of Players (%)',
-        legend_title='Region',
-    )
+    #fig.update_layout(
+     #   title='Share of Players in Population per Region',
+      #  xaxis_title='Year',
+       # yaxis_title='Share of Players (%)',
+        #legend_title='Region',
+   # )
 
-    fig.show()
+    #fig.show()
 
 
 #code for making a graph of share of players in population across regions
-import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
 def plot_share_data(df):
     # Creating subplots: one row, three columns
     fig = make_subplots(rows=1, cols=3, subplot_titles=("Men", "Women", "Sex, total"))
