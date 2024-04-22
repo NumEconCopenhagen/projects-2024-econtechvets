@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 import numpy as np 
 from scipy import optimize
+from scipy.optimize import minimize_scalar
 
 class InauguralProjectClass: 
 
@@ -15,67 +16,85 @@ class InauguralProjectClass:
         # b. endowments
         par.w1A = 0.8
         par.w2A = 0.3
-
-        # c. total endowments
         par.w1B = 1-par.w1A
         par.w2B = 1-par.w2A
 
-        # d. prices
-        par.p2 = 1
-
     def utility_A(self,x1A,x2A):
+        """utility of consumer A"""
         par = self.par
         return x1A**par.alpha*x2A**(1-par.alpha)
 
     def utility_B(self,x1B,x2B):
+        """utility of consumer B"""
         par = self.par
         return x1B**par.beta*x2B**(1-par.beta)
 
-    def demand_A(self,p1): # demand for good 1 by agent A, due to Walras law, we only need to find the demand for good 1
+    def demand_A(self,p1, p2=1):
+        """demand of consumer A"""
         par = self.par
-        return par.alpha*(p1*par.w1A+par.p2*par.w2A)/p1
+        x1A = par.alpha*(p1*par.w1A+p2*par.w2A)/p1
+        x2A = (1-par.alpha)*(p1*par.w1A+p2*par.w2A)/p2
+        return x1A, x2A
 
-    def demand_B(self,p1): # demand for good 1 by agent B, due to Walras law, we only need to find the demand for good 1
+
+    def demand_B(self,p1, p2=1):
+         """demand of consumer B"""
+         par = self.par
+         x1B = par.beta*(p1*par.w1B+p2*par.w2B)/p1
+         x2B = (1-par.beta)*(p1*par.w1B+p2*par.w2B)/p2
+         return x1B, x2B
+
+    def utility_A_with_price(self, p1, w1B, w2B):
+        """Utility of consumer A with given prices and endowments of B"""
         par = self.par
-        return par.beta*(p1*par.w1B+par.p2*par.w2B)/p1
+        x1B, x2B = self.demand_B(p1)
+        return self.utility_A(1 - x1B, 1 - x2B)
+
+    def max_utility_A_allocation(self, P1):
+        """Find the allocation maximizing consumer A's utility"""
+        def negative_utility(p1):
+            return -self.utility_A_with_price(p1, self.par.w1B, self.par.w2B)
+
+        result = minimize_scalar(negative_utility, bounds=(min(P1), max(P1)), method='bounded')
+        max_utility_price = result.x
+        max_utility = -result.fun
+        x1B, x2B = self.demand_B(max_utility_price)
+        allocation = (1 - x1B, 1 - x2B)
+
+        return max_utility_price, allocation, max_utility
 
     def check_market_clearing(self,p1):
-
         par = self.par
-
-        x1A = self.demand_A(p1)
-        x1B = self.demand_B(p1)
-        x2A = self.demand_A(par.p2)
-        x2B = self.demand_B(par.p2)
-
+        x1A,x2A = self.demand_A(p1)
+        x1B,x2B = self.demand_B(p1)
         eps1 = x1A-par.w1A + x1B-(1-par.w1A)
         eps2 = x2A-par.w2A + x2B-(1-par.w2A)
-
         return eps1,eps2
     
-    def calculate_market_clearing_errors(self, P1): # Defining the market clearing errors
-        errors = [] #Creating an empty list to store the errors
+    def calculate_market_clearing_errors(self, P1): 
+        """Calculate market clearing errors for a given set of prices P1"""
+        errors_1 = []
+        errors_2 = []
 
-        for p1 in P1: #Iterates over each p1 value in the set P1 and checks the market clearing errors
-            eps1, eps2 = self.check_market_clearing(p1) # Calculating the excess demand
-            error = abs(eps1) + abs(eps2) #Market clearing errors = the sum of the absolute values of the errors
-            errors.append(error)
-
-        return errors
-    
-    def find_market_clearing_price(self, P1): # Finding the market clearing price that minimizes the sum of the market clearing errors 
-        min_error = float('inf') #Setting the minimum error to infinity
-        market_clearing_price = None
-
-        for p1 in P1: #Iterates over each p1 value in the set P1 and checks the market clearing errors
+        for p1 in P1:
             eps1, eps2 = self.check_market_clearing(p1)
-            error = abs(eps1) + abs(eps2)
+            errors_1.append(eps1)
+            errors_2.append(eps2)
 
-            if error < min_error: #If the error is smaller than the current minimum error, the error becomes the new minimum error and the market clearing price becomes the new p1 value
-                min_error = error 
-                market_clearing_price = p1 
+        return errors_1, errors_2
+    
+    def market_clearing_price(self, P1):
+        """Find the market clearing price using a solver"""
+        
+        # Define a function to minimize - sum of absolute errors
+        def objective_function(p1):
+            eps1, eps2 = self.check_market_clearing(p1)
+            return abs(eps1) + abs(eps2)
 
-        return market_clearing_price, min_error #Returns the market clearing price
+        # Find the market clearing price that minimizes the objective function
+        result = minimize_scalar(objective_function, bounds=(min(P1), max(P1)), method='bounded')
+
+        return result.x, result.fun    
 
     def maximize_aggregate_utility(self):
         max_utility = float('-inf')
