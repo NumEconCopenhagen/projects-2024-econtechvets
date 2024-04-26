@@ -45,59 +45,11 @@ class InauguralProjectClass:
          x2B = (1-par.beta)*(p1*par.w1B+p2*par.w2B)/p2
          return x1B, x2B
 
-    def utility_A_with_price(self, p1, w1B, w2B):
-        """Utility of consumer A with given prices and endowments of B"""
-        par = self.par
-        x1B, x2B = self.demand_B(p1)
-        return self.utility_A(1 - x1B, 1 - x2B)
 
-    def max_utility_A_allocation(self, P1):
-        """Find the allocation maximizing consumer A's utility"""
-        def negative_utility(p1):
-            return -self.utility_A_with_price(p1, self.par.w1B, self.par.w2B)
-
-        result = minimize_scalar(negative_utility, bounds=(min(P1), max(P1)), method='bounded')
-        max_utility_price = result.x
-        max_utility = -result.fun
-        x1B, x2B = self.demand_B(max_utility_price)
-        allocation = (1 - x1B, 1 - x2B)
-
-        return max_utility_price, allocation, max_utility
-
-    def check_market_clearing(self,p1):
-        par = self.par
-        x1A,x2A = self.demand_A(p1)
-        x1B,x2B = self.demand_B(p1)
-        eps1 = x1A-par.w1A + x1B-(1-par.w1A)
-        eps2 = x2A-par.w2A + x2B-(1-par.w2A)
-        return eps1,eps2
-    
-    def calculate_market_clearing_errors(self, P1): 
-        """Calculate market clearing errors for a given set of prices P1"""
-        errors_1 = []
-        errors_2 = []
-
-        for p1 in P1:
-            eps1, eps2 = self.check_market_clearing(p1)
-            errors_1.append(eps1)
-            errors_2.append(eps2)
-
-        return errors_1, errors_2
-    
-    def market_clearing_price(self, P1):
-        """Find the market clearing price using a solver"""
-        
-        # Define a function to minimize - sum of absolute errors
-        def objective_function(p1):
-            eps1, eps2 = self.check_market_clearing(p1)
-            return abs(eps1) + abs(eps2)
-
-        # Find the market clearing price that minimizes the objective function
-        result = minimize_scalar(objective_function, bounds=(min(P1), max(P1)), method='bounded')
-
-        return result.x, result.fun
-
-#We define a function to calculate the indifference curves for our two consumers
+    """
+    1: Edgeworth Box
+    """
+    #We define a function to calculate the indifference curves for our two consumers
     #First, We define the method
     def find_indifference_curve(self, consumer, w1, w2, alpha, N, x2_max):
 
@@ -189,25 +141,167 @@ class InauguralProjectClass:
 
         plt.show()
 
-    def maximize_aggregate_utility(self):
-        max_utility = float('-inf')
-        optimal_x1A = None
-        optimal_x2A = None
+    """
+    2: Market clearing errors
+    """
+    def check_market_clearing(self,p1):
+        par = self.par
+        x1A,x2A = self.demand_A(p1)
+        x1B,x2B = self.demand_B(p1)
+        eps1 = x1A-par.w1A + x1B-(1-par.w1A)
+        eps2 = x2A-par.w2A + x2B-(1-par.w2A)
+        return eps1,eps2
+    
+    def calculate_market_clearing_errors(self, P1): 
+        """Calculate market clearing errors for a given set of prices P1"""
+        errors_1 = []
+        errors_2 = []
 
-        for x1A in np.linspace(0, 1, 101):  # 101 points between 0 and 1
-            for x2A in np.linspace(0, 1, 101):
-                utility = self.utility_A(x1A, x2A) + self.utility_B(1 - x1A, 1 - x2A)
-                if utility > max_utility:
-                    max_utility = utility
-                    optimal_x1A = x1A
-                    optimal_x2A = x2A
+        for p1 in P1:
+            eps1, eps2 = self.check_market_clearing(p1)
+            errors_1.append(eps1)
+            errors_2.append(eps2)
 
-        return optimal_x1A, optimal_x2A
+        return errors_1, errors_2
+    
+    """
+    3: Market clearing price
+    """
+    def market_clearing_price(self, P1):
+        """Find the market clearing price using a solver"""
+        
+        # Define a function to minimize - sum of absolute errors
+        def objective_function(p1):
+            eps1, eps2 = self.check_market_clearing(p1)
+            return abs(eps1) + abs(eps2)
 
+        # Find the market clearing price that minimizes the objective function
+        result = minimize_scalar(objective_function, bounds=(min(P1), max(P1)), method='bounded')
 
+        return result.x, result.fun
 
+    """
+    4a and 4b: A chooses the price to maximize her own utility.
+    """
+    def utility_A_with_price(self, p1, w1B, w2B):
+        """Utility of consumer A with given prices and endowments of B"""
+        par = self.par
+        x1B, x2B = self.demand_B(p1)
+        return self.utility_A(1 - x1B, 1 - x2B)
 
+    def max_utility_A_allocation(self, P1):
+        """Find the allocation maximizing consumer A's utility"""
+        def negative_utility(p1):
+            return -self.utility_A_with_price(p1, self.par.w1B, self.par.w2B)
 
+        result = minimize_scalar(negative_utility, bounds=(min(P1), max(P1)), method='bounded')
+        max_utility_price = result.x
+        max_utility = -result.fun
+        x1B, x2B = self.demand_B(max_utility_price)
+        allocation_A = (1 - x1B, 1 - x2B)
+        allocation_B = (x1B, x2B)
+
+        return max_utility_price, allocation_A, allocation_B, max_utility
+
+    '''
+    5a. Allocation in choice set C with A as the market maker.
+    '''
+    def allocation_within_choice_set(self, N=75):
+        # Calculate initial endowments for A and B
+        w1A, w2A = self.par.w1A, self.par.w2A
+        w1B, w2B = self.par.w1B, self.par.w2B
+
+        # Calculate utility of initial endowments for A and B
+        uA_initial = self.utility_A(w1A, w2A)
+        uB_initial = self.utility_B(w1B, w2B)
+
+        # Create arrays of possible consumption levels for A and B
+        xA_levels = np.linspace(0, 1, N + 1)
+        xB_levels = 1 - xA_levels
+
+        # Initialize variables to store the optimal allocation and maximum utility for A
+        optimal_allocation_A_5a = (0, 0)
+        max_utility_A_5a = 0
+
+        # Iterate over all possible combinations of consumption levels for A and B
+        for xA1 in xA_levels:
+            for xA2 in xA_levels:
+                # Calculate consumption levels for B
+                xB1 = 1 - xA1
+                xB2 = 1 - xA2
+
+                # Calculate utility for A and B
+                uA = self.utility_A(xA1, xA2)
+                uB = self.utility_B(xB1, xB2)
+
+                # Check if consumption levels satisfy the choice set conditions
+                if uA >= uA_initial and uB >= uB_initial:
+                    # Update optimal allocation and maximum utility for A if current allocation is better
+                    if uA > max_utility_A_5a:
+                        max_utility_A_5a = uA
+                        optimal_allocation_A_5a = (xA1, xA2)
+
+        # Calculate allocation for B corresponding to optimal allocation for A
+        optimal_allocation_B_5a = (1 - optimal_allocation_A_5a[0], 1 - optimal_allocation_A_5a[1])
+
+        return optimal_allocation_A_5a, optimal_allocation_B_5a, max_utility_A_5a
+
+    '''
+    5b. Allocation without restrictions, and still A as the market maker.
+    '''
+    def allocation_without_restrictions(self):
+        # Define the objective function for A's utility
+        def objective_function(x):
+            xA1, xA2 = x
+            return -self.utility_A(xA1, xA2)
+
+        # Define the inequality constraint for B's utility
+        def constraint_function(x):
+            xB1, xB2 = 1 - x[0], 1 - x[1]
+            return self.utility_B(xB1, xB2) - self.utility_B(self.par.w1B, self.par.w2B)
+
+        # Define bounds for xA1 and xA2
+        bounds = [(0, 1), (0, 1)]
+
+        # Solve the optimization problem
+        result = optimize.minimize(objective_function, x0=(0.5, 0.5), bounds=bounds, constraints={'type': 'ineq', 'fun': constraint_function})
+
+        # Extract optimal allocation and maximum utility for A
+        optimal_allocation_A = result.x
+        max_utility_A = -result.fun
+
+        # Calculate consumption levels for B corresponding to optimal allocation for A
+        optimal_allocation_B = (1 - optimal_allocation_A[0], 1 - optimal_allocation_A[1])
+
+        return optimal_allocation_A, optimal_allocation_B, max_utility_A
+
+    '''
+    6a. Allocation by the utilitarian social planner.
+    '''
+    def utilitarian_allocation(self):
+        # Define the objective function as the negative of the sum of utilities
+        def objective_function(x):
+            xA1, xA2 = x
+            return -(self.utility_A(xA1, xA2) + self.utility_B(1 - xA1, 1 - xA2))
+
+        # Define bounds for xA1 and xA2
+        bounds = [(0, 1), (0, 1)]
+
+        # Solve the optimization problem
+        result = optimize.minimize(objective_function, x0=(0.5, 0.5), bounds=bounds)
+
+        # Extract optimal allocation and maximum aggregate utility
+        optimal_allocation_A = result.x
+        max_utility_aggregate = -result.fun
+
+        # Calculate consumption levels for B corresponding to optimal allocation for A
+        optimal_allocation_B = (1 - optimal_allocation_A[0], 1 - optimal_allocation_A[1])
+
+        return optimal_allocation_A, optimal_allocation_B, max_utility_aggregate
+
+    '''
+    #FRENOR: Er det gammel kode der skal slettes?
+    '''
     def calculate_allocation(self, x1A, x2A):
         x1B = 1 - x1A
         x2B = 1 - x2A
