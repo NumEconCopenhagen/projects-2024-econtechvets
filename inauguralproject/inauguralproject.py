@@ -51,9 +51,23 @@ class InauguralProjectClass:
     1: Edgeworth Box
     """
     #We define a function to calculate the indifference curves for our two consumers
-    #First, We define the method
     def find_indifference_curve(self, consumer, w1, w2, alpha, N, x2_max):
+        """
+        Calculates the indifference curve for a given consumer, starting from their endowment and covering a range of values for one of the goods.
 
+        Args:
+            consumer (str): The consumer for whom to calculate the curve ('A' or 'B').
+            w1 (float): Initial endowment of good 1 for the consumer.
+            w2 (float): Initial endowment of good 2 for the consumer.
+            alpha (float): The weight (preference) given to good 1 in the consumer's utility function.
+            N (int): Number of points to calculate along the indifference curve.
+            x2_max (float): The maximum value for good 2 to use in generating the curve.
+
+        Returns:
+            tuple (numpy.ndarray, numpy.ndarray): Two arrays, one for the quantity of good 1 and one for good 2, representing points along the indifference curve.
+
+        This method selects the appropriate utility function for the specified consumer to compute the indifference curve. 
+        """
         # We use this code block to select the appropriate utility function given the consumer (A or B)
         if consumer == 'A':
             utility_function = self.utility_A
@@ -83,6 +97,18 @@ class InauguralProjectClass:
 
     # This code is used to draw our edgeworth box.
     def plot_edgeworth_box(self, N=75, x2_max=1, comparison_data=None):
+        """
+        Plots an Edgeworth Box illustrating the allocations of two goods between two consumers, A and B.
+
+        Args:
+            allocation_A: Allocation for consumer A, specified as a tuple (x1A, x2A), where x1A is the amount of good 1 and x2A is the amount of good 2.
+            allocation_B: Allocation for consumer B, specified as a tuple (x1B, x2B), where x1B is the amount of good 1 and x2B is the amount of good 2.
+
+        Returns:
+            None: This function does not return any value but displays a matplotlib plot showing the Edgeworth Box.
+
+        This method visualizes the consumption allocations of two goods between two consumers within an Edgeworth Box framework.
+        """
         par = self.par
         # Calculate indifference curves for A and B
         x1A_vec, x2A_vec = self.find_indifference_curve('A', self.par.w1A, self.par.w2A, self.par.alpha, N, x2_max)
@@ -156,6 +182,17 @@ class InauguralProjectClass:
     """
     # First, defining the set P1
     def generate_set_P1(self, start, end, N):
+        """
+        Generates and returns set P1, a collection of points representing possible allocations of goods.
+
+        Args:
+            num_points (int): The number of points to generate in set P1.
+
+        Returns:
+            numpy.ndarray: An array of points, each represented by a tuple of coordinates, forming the set P1.
+
+        This method generates a set of points representing feasible allocations.
+        """
         # Start at 0.5 and add (2*i/N) for each term
         P1 = [start + (2*i)/N for i in range(N)]
         # Ensure that the last element is exactly 2.5
@@ -164,6 +201,17 @@ class InauguralProjectClass:
 
     # We define a method to check the market clearing
     def check_market_clearing(self,p1):
+        """
+        Checks if the given allocations result in market clearing
+
+        Args:
+            allocations (dict): A dictionary containing the allocations for consumers
+
+        Returns:
+            bool: Returns True if the market clears (supply equals demand for all goods), otherwise False.
+
+        This method evaluates whether the sum of goods allocated to all consumers matches the total available supply. It is used in the next method to calculate the market clearing errors.
+        """
         par = self.par
         x1A,x2A = self.demand_A(p1)
         x1B,x2B = self.demand_B(p1)
@@ -173,7 +221,7 @@ class InauguralProjectClass:
     
     # We define a method to calculate the market clearing errors
     def calculate_market_clearing_errors(self, P1): 
-        """Calculate market clearing errors for a given set of prices P1"""
+        """Calculate market clearing errors for a given set of prices P1 using the methods defined above"""
         errors_1 = []
         errors_2 = []
 
@@ -206,10 +254,22 @@ class InauguralProjectClass:
         plt.legend()
         plt.show()
     
+
     """
     3: Market clearing price
     """
     def find_market_clearing_price(self):
+        """
+        Determines the market clearing price for goods in the exchange economy
+
+        Args:
+            initial_price_guess (float): An initial guess for the price to start the optimization process.
+
+        Returns:
+            float: The market clearing price, at which demand equals supply.
+
+        This method utilizes numerical optimization techniques to find the price that equates the total demand and supply of goods within the market.
+        """
         # Objective function: sum of absolute values of market-clearing errors
         objective_function = lambda p1: abs(self.check_market_clearing(p1)[0]) + abs(self.check_market_clearing(p1)[1])
 
@@ -228,6 +288,17 @@ class InauguralProjectClass:
     """
     # We define the method to find the market clearing price using the set P1
     def max_utility_A(self, P1_set):
+        """
+        Maximizes the utility of consumer A by optimizing their allocation of goods for a price in P1_set.
+
+        Args:
+            None
+
+        Returns:
+            tuple (float, float): The optimal allocation of goods for consumer A, given as (x1A, x2A).
+
+        This method finds the combination of goods 1 and 2 that maximizes the utility for consumer A for a price within P1_set.
+        """
         max_utility = -np.inf
         optimal_price = None
         optimal_allocation_A = None
@@ -259,6 +330,17 @@ class InauguralProjectClass:
     4b: A chooses any positive price to maximize her own utility.
     """ 
     def max_utility_A_continuous(self):
+        """
+        Maximizes the utility of consumer A across a continuous range of good allocations (not restricted by P1_set like above)
+
+        Args:
+            bounds (tuple of (float, float)): The bounds within which to optimize the allocations of goods for consumer A.
+
+        Returns:
+            tuple (float, float): The optimal allocation of goods for consumer A that maximizes their utility, represented as (x1A, x2A).
+
+        This method employs a continuous optimization approach to find the allocation of goods that maximizes consumer A's utility. The method is not restricted by the discrete set P1_set.
+        """
         # Define the negative of the utility function of A as the objective
         def objective(p1):
             # Calculate consumer B's demand at the given price
@@ -296,6 +378,17 @@ class InauguralProjectClass:
     5a. Allocation in choice set C with A as the market maker.
     '''
     def pareto_optimal_allocations(self):
+        """
+        Identifies and returns Pareto optimal allocations between our two consumers A and B.
+
+        Args:
+            None
+
+        Returns:
+            list of tuples: A list of Pareto optimal allocations, where each tuple (x1A, x2A, x1B, x2B) represents the allocation of goods between the two consumers.
+
+        This method calculates and lists all allocations that are Pareto optimal within the model's constraints. 
+        """
         # Calculate initial utilities for A and B
         utility_A_initial = self.utility_A(self.par.w1A, self.par.w2A)
         utility_B_initial = self.utility_B(self.par.w1B, self.par.w2B)
@@ -331,6 +424,17 @@ class InauguralProjectClass:
     5b. Allocation if no further restrictions are imposed and with A as the market maker.
     '''
     def pareto_optimal_allocations_5b(self):
+        """
+        Identifies and returns Pareto optimal allocations for our two consumers
+
+        Args:
+            None
+
+        Returns:
+            list of tuples: A list of Pareto optimal allocations, where each tuple (x1A, x2A, x1B, x2B) represents the specific allocation of goods.
+
+        This method calculates and list all Pareto optimal allocations. 
+        """
         # Calculate initial utilities for A and B
         utility_A_initial = self.utility_A(self.par.w1A, self.par.w2A)
         utility_B_initial = self.utility_B(self.par.w1B, self.par.w2B)
@@ -373,6 +477,17 @@ class InauguralProjectClass:
     6a. Allocation by the utilitarian social planner.
     '''
     def utilitarian_allocation(self):
+        """
+        Method to solve the model seen from a social planner's perspective, maximizing the sum of utilities for consumers A and B.
+
+        Args:
+            None
+
+        Returns:
+            tuple (float, float, float): The optimal allocation for consumer A (xA1, xA2) and the maximum aggregate utility achieved by this allocation.
+
+        This method uses a numerical optimization technique to maximize the sum of utilities across all consumers, achieving the utilitarian optimal allocation. 
+        """
         # Define the objective function as the negative of the sum of utilities
         def objective_function(x):
             xA1, xA2 = x
