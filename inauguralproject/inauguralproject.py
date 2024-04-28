@@ -95,7 +95,7 @@ class InauguralProjectClass:
 
         return x1_vec, x2_vec
 
-    # This code is used to draw our edgeworth box.
+  # This code is used to draw our edgeworth box.
     def plot_edgeworth_box(self, N=75, x2_max=1, comparison_data=None):
         """
         Plots an Edgeworth Box illustrating the allocations of two goods between two consumers, A and B.
@@ -527,3 +527,53 @@ class InauguralProjectClass:
         plt.grid(True)
         plt.legend()
         plt.show()
+
+    '''
+    8. Market equilibria for random draws
+    '''
+    def find_market_equilibrium_allocation(self):
+        """
+        Finds the market equilibrium allocation of goods.
+
+        Returns:
+            tuple: The equilibrium allocations for consumers A and B.
+        """
+        # Use the find_market_clearing_price method to find the equilibrium price
+        p1_eq = self.find_market_clearing_price()
+
+        # Calculate the equilibrium allocations for consumers A and B
+        x1A_eq, x2A_eq = self.demand_A(p1_eq)
+        x1B_eq, x2B_eq = self.demand_B(p1_eq)
+
+        return x1A_eq, x2A_eq, x1B_eq, x2B_eq
+
+    def save_state(self):
+        """Saves the current state of the class parameters."""
+        self.saved_state = (self.par.w1A, self.par.w2A, self.par.w1B, self.par.w2B)
+    
+    def restore_state(self):
+        """Restores the class parameters to their saved state."""
+        self.par.w1A, self.par.w2A, self.par.w1B, self.par.w2B = self.saved_state
+
+    def find_and_plot_equilibria_for_random_draws(self, num_draws, seed=123):
+        np.random.seed(seed)
+        random_draws = np.random.rand(num_draws, 2)
+        comparison_data = {}
+
+        # Save the current state before the loop
+        self.save_state()
+
+        for i, draw in enumerate(random_draws):
+            # Update the class parameters for each draw
+            self.par.w1A, self.par.w2A = draw[0], draw[1]
+            self.par.w1B, self.par.w2B = 1 - draw[0], 1 - draw[1]
+            
+            # Find the equilibrium allocations for the current draw
+            x1A_eq, x2A_eq, x1B_eq, x2B_eq = self.find_market_equilibrium_allocation()
+            comparison_data[f'Draw {i+1}'] = (x1A_eq, x2A_eq)
+
+            # Restore the original state after each draw
+            self.restore_state()
+
+        # Now plot the Edgeworth box with the calculated equilibria
+        self.plot_edgeworth_box(comparison_data=comparison_data)
