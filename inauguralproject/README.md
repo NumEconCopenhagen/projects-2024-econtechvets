@@ -9,6 +9,6 @@ The project consists of:
 Finally, we illusrate our findings in an edgeworth box and find the market equilibrium for a allocation for a randomly drawn set.
 
 
-The **results** of the project can be seen from running [inauguralproject.ipynb](inauguralproject.ipynb). We have collected most of our code in the .py-file such that the notebook mostly shows your results, comments to results and discussions.
+The **results** of the project can be seen from running [inauguralproject.ipynb](inauguralproject.ipynb). We have collected most of our code in the .py-file such that the notebook mostly shows our results, comments to results and discussions.
 
 **Dependencies:** Apart from a standard Anaconda Python 3 installation, the project requires no further packages.
