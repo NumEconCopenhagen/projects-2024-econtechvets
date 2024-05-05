@@ -1,9 +1,9 @@
 from scipy import optimize
 from types import SimpleNamespace
 
-class modelprojectclass:
+class IS_LM_model:
     
-    def __init__(self, T, G, M, P, a, b, c, d, e, f):
+    def __init__(self, **kwargs):
 
         par = self.par = SimpleNamespace()
 
