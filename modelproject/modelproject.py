@@ -2,6 +2,8 @@ from sympy import symbols, Eq, solve, lambdify, simplify, latex
 from types import SimpleNamespace
 from IPython.display import display, Math, HTML
 from scipy.optimize import minimize
+import matplotlib.pyplot as plt
+import numpy as np
 
 class IS_LM_model_analytical():
     
@@ -109,13 +111,45 @@ class IS_LM_model_analytical():
         print(f'Equilibrium Output (Y): {sol.Y:.2f}')
         print(f'Equilibrium Interest Rate (r): {sol.r:.2f}')
 
+    def plot_IS_LM_curves(self):
+        par = self.par
+
+        # Calculate equilibrium values
+        Y_eq = self.sol.Y
+        r_eq = self.sol.r
+
+        # Range of output (Y) values
+        Y_values = np.linspace(0, Y_eq * 2, 100)  # Increase the range for better visibility
+
+        # Calculate corresponding interest rates for the LM curve
+        r_values = (par.e * Y_values - par.M / par.P) / par.f
+
+        # Calculate corresponding interest rates for the IS curve
+        IS_values = (1 / par.d) * (par.a + par.c - par.d * par.T + par.G - (1 - par.b) * Y_values)
+
+        # Plot IS and LM curves
+        plt.figure(figsize=(10, 6))
+        plt.plot(Y_values, IS_values, label='IS curve', color='blue', linestyle='--')
+        plt.plot(Y_values, r_values, label='LM curve', color='red')
+
+        # Plot equilibrium point
+        plt.scatter(Y_eq, r_eq, color='black', label='Equilibrium')
+
+        plt.title('IS-LM Model')
+        plt.xlabel('Output (Y)')
+        plt.ylabel('Interest Rate (r)')
+        plt.ylim(min(r_values.min(), IS_values.min()) - 5, max(r_values.max(), IS_values.max()) + 5)  # Adjust y-axis limit
+        plt.grid(True)
+        plt.legend()
+        plt.show()
+
 
 class IS_LM_numerical():
     def __init__(self, analytical_model=None, **kwargs):
         '''
         Initializes the numerical model
-        If an analytical model is provided, it inherits its parameters
-        Otherwise, kwargs allow any parameter to be set
+        As the analytical model is provided, this inherits its parameters
+        Otherwise, kwargs would allow any parameter to be set
         '''
         self.par = par = SimpleNamespace()  # Create a namespace object for parameters
         self.sol = sol = SimpleNamespace()  # Create a namespace object for solution results
