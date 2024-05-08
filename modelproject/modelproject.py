@@ -111,7 +111,7 @@ class IS_LM_model_analytical():
         print(f'Equilibrium Output (Y): {sol.Y:.2f}')
         print(f'Equilibrium Interest Rate (r): {sol.r:.2f}')
 
-    def plot_IS_LM_curves(self):
+    def plot_IS_LM_curves(self, ax=None):
         par = self.par
 
         # Calculate equilibrium values
@@ -125,23 +125,24 @@ class IS_LM_model_analytical():
         r_values = (par.e * Y_values - par.M / par.P) / par.f
 
         # Calculate corresponding interest rates for the IS curve
-        IS_values = (1 / par.d) * (par.a + par.c - par.d * par.T + par.G - (1 - par.b) * Y_values)
+        IS_values = (1 / par.d) * (par.a + par.c - par.b * par.T + par.G - (1 - par.b) * Y_values)
 
         # Plot IS and LM curves
-        plt.figure(figsize=(10, 6))
-        plt.plot(Y_values, IS_values, label='IS curve', color='blue', linestyle='--')
-        plt.plot(Y_values, r_values, label='LM curve', color='red')
+        if ax is None:
+            plt.figure(figsize=(10, 6))
+            ax = plt.gca()
+        ax.plot(Y_values, IS_values, label='IS curve', color='blue', linestyle='--')
+        ax.plot(Y_values, r_values, label='LM curve', color='red')
 
         # Plot equilibrium point
-        plt.scatter(Y_eq, r_eq, color='black', label='Equilibrium')
+        ax.scatter(Y_eq, r_eq, color='black', label='Equilibrium')
 
-        plt.title('IS-LM Model')
-        plt.xlabel('Output (Y)')
-        plt.ylabel('Interest Rate (r)')
-        plt.ylim(min(r_values.min(), IS_values.min()) - 5, max(r_values.max(), IS_values.max()) + 5)  # Adjust y-axis limit
-        plt.grid(True)
-        plt.legend()
-        plt.show()
+        ax.set_title('IS-LM Model')
+        ax.set_xlabel('Output (Y)')
+        ax.set_ylabel('Interest Rate (r)')
+        ax.set_ylim(min(r_values.min(), IS_values.min()) - 5, max(r_values.max(), IS_values.max()) + 5)  # Adjust y-axis limit
+        ax.grid(True)
+        ax.legend()
 
 
 class IS_LM_numerical():
