@@ -4,7 +4,7 @@ Our project is titled **Modelproject, IS-LM** and considers an IS-LM model descr
 1. **Model description:** we describe how the model is set-up and define the relevant equations
 2. **Analytical solution:** we calculate the analytical solution of our model
 3. **Numerical solution:** we calculate the numerical solution of our model and test for different scenarios
-4. **Model extension:** we extend to model to an be in a small open economy and analyze changes to the parameters values of the model
+4. **Model extension:** we extend to model to have proportional taxes instead of lump-sum taxes
 5. **Conclusion:** we conclude on our findings
 
 The **results** of the project can be seen from running [modelproject.ipynb](modelproject.ipynb), which depends on [modelproject.py](modelproject.py) where most of the actual code has solving the model has been written. 
