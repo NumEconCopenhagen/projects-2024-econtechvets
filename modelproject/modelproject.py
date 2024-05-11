@@ -219,3 +219,59 @@ class IS_LM_numerical():
         display(HTML('<strong>Equilibrium Solution (Numerical):</strong>'))
         print(f'For initial guesses: Y = {initial_guess[0]:.1f} and r = {initial_guess[1]:.1f}: '
               f'the equilibrium output and interest rate are (Y, r) = ({sol.Y:.2f}, {sol.r:.2f})')
+    
+    def print_solution_2(self):
+        '''
+        Print the equilibrium solution_2
+        '''
+        sol = self.sol
+        initial_guess = self.initial_guess
+        # Use HTML to make the text bold
+        display(HTML('<strong>Equilibrium Solution (Numerical):</strong>'))
+        print(f'the equilibrium output and interest rate are (Y, r) = ({sol.Y:.2f}, {sol.r:.2f})')
+    
+    def plot_curves(self, Y_range, r_range, *params):
+        '''
+        Plot the IS and LM curves for multiple sets of parameters.
+
+        :param Y_range: tuple (Y_min, Y_max) defining the range of output
+        :param r_range: tuple (r_min, r_max) defining the range of interest rates
+        :param params: one or more dictionaries with the parameters for the curves
+        '''
+        Y_values = np.linspace(Y_range[0], Y_range[1], 100)
+
+        plt.figure(figsize=(10, 7))
+
+        # Loop through each parameter set with an index
+        for index, param_set in enumerate(params):
+            # Update parameters
+            for key, value in param_set.items():
+                setattr(self.par, key, value)
+
+            # Define line style, solid for the first set, dotted for others
+            line_style = '-' if index == 0 else ':'
+
+            # Calculate IS curve: rearrange the IS equation to solve for r in terms of Y
+            IS_curve = [(self.par.a + self.par.c + self.par.G - (1 - self.par.b) * Y - self.par.b * self.par.T) / self.par.d for Y in Y_values]
+            plt.plot(Y_values, IS_curve, color='red', linestyle=line_style, label=f'IS (Params: {param_set})')
+
+            # Calculate LM curve
+            LM_curve = [(self.par.e * Y - self.par.M / self.par.P) / self.par.f for Y in Y_values]
+            plt.plot(Y_values, LM_curve, color='blue', linestyle=line_style, label=f'LM (Params: {param_set})')
+
+            # Solve numerically for the intersection if needed
+            self.solve_IS_LM_numerically()
+            sol_Y = self.sol.Y
+            sol_r = self.sol.r
+
+            # Plot the intersection point
+            plt.scatter(sol_Y, sol_r, color='black', s=100, zorder=5)  # Plot without a label to avoid clutter
+
+        plt.title('IS-LM Curves')
+        plt.xlabel('Output (Y)')
+        plt.ylabel('Interest Rate (r)')
+        plt.xlim(Y_range[0], Y_range[1])  # Set the X-axis limit based on Y_range
+        plt.ylim(r_range[0], r_range[1])  # Set the Y-axis limit based on r_range
+        plt.legend()
+        plt.grid(True)
+        plt.show()
