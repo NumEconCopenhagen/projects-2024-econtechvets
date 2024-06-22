@@ -75,17 +75,17 @@ The function plot_growth_contributions_all_denmark saves the figure growth_contr
 showing the year-over-year change in the number of football players by sex in Denmark.
 """
 def plot_growth_contributions_all_denmark(df, filename='growth_contributions_all_denmark.png'):
-    # Filter for 'All Denmark'
-    df_dk = df[df['region'] == 'All Denmark']
+    # Filter for 'All Denmark' and make a copy to avoid SettingWithCopyWarning
+    df_dk = df[df['region'] == 'All Denmark'].copy()
 
     # Calculate year-over-year change for each category
-    df_dk['year_over_year_change'] = df_dk.groupby('sex')['players'].diff()
+    df_dk.loc[:, 'year_over_year_change'] = df_dk.groupby('sex', observed=False)['players'].diff()
 
     # Calculate the contribution for each category
     total_values_previous_year = df_dk[df_dk['sex'] == 'Sex, total'][['year', 'players']].rename(columns={'players': 'total_previous_year'})
     total_values_previous_year['year'] += 1
     df_dk = pd.merge(df_dk, total_values_previous_year, on='year', how='left')
-    df_dk['contribution'] = df_dk.apply(lambda x: x['year_over_year_change'] / x['total_previous_year'] if x['sex'] != 'Sex, total' else None, axis=1)
+    df_dk.loc[:, 'contribution'] = df_dk.apply(lambda x: x['year_over_year_change'] / x['total_previous_year'] if x['sex'] != 'Sex, total' else None, axis=1)
 
     # Pivot the data for plotting
     pivot_contribution = df_dk.pivot(index='year', columns='sex', values='contribution').fillna(0)
@@ -102,6 +102,7 @@ def plot_growth_contributions_all_denmark(df, filename='growth_contributions_all
     # Save the figure
     plt.savefig(filename)
     plt.close()
+
 
 """
 The function process_data takes a DataFrame df as input and returns a new DataFrame 
