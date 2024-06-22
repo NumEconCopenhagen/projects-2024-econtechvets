@@ -198,3 +198,81 @@ def compute_approximation_and_true_value(f, X, y, A, B, C, D, inside_ABC, bary_c
 
 
     return f_y_true, f_y_approx, abs_error
+
+def plot_and_compute_results(X, Y, f):
+    """
+    Plot the points in X and compute the approximation of f(y) for each point y in Y.
+
+    Returns: A list of tuples containing the results for each point y in Y.
+    """
+    # Initialize lists to store results
+    results = []
+
+    # Define colors for each point in Y
+    colors = ['red', 'blue', 'green', 'purple', 'orange']
+
+    # Plot the points in X
+    plt.figure(figsize=(10, 10))
+    plt.scatter(X[:, 0], X[:, 1], color='blue', label='Random Points in X')
+
+    # Iterate over each point in Y
+    for idx, y in enumerate(Y):
+        y = np.array(y)  # Ensure y is a numpy array
+        A, B, C, D = find_points(X, y)  # Find points A, B, C, D
+
+        # Plot point y
+        plt.scatter(y[0], y[1], color=colors[idx], label=f'y={y}', zorder=5)
+
+        # Check if any of the points A, B, C, D is None
+        if A is None or B is None or C is None or D is None:
+            results.append((y, "Skipped: One of the points A, B, C, D is None", None, None, None))
+            continue
+
+        # Plot points A, B, C, D
+        plt.scatter(A[0], A[1], color='green', zorder=5)
+        plt.scatter(B[0], B[1], color='purple', zorder=5)
+        plt.scatter(C[0], C[1], color='orange', zorder=5)
+        plt.scatter(D[0], D[1], color='brown', zorder=5)
+
+        # Check if y is inside triangles and compute barycentric coordinates
+        (inside_ABC, bary_coords_ABC), (inside_CDA, bary_coords_CDA) = check_point_in_triangles(A, B, C, D, y)
+
+        # Plot triangles ABC and CDA
+        if A is not None and B is not None and C is not None:
+            plt.plot([A[0], B[0]], [A[1], B[1]], 'r-')
+            plt.plot([B[0], C[0]], [B[1], C[1]], 'r-')
+            plt.plot([C[0], A[0]], [C[1], A[1]], 'r-')
+
+        if C is not None and D is not None and A is not None:
+            plt.plot([C[0], D[0]], [C[1], D[1]], 'g-')
+            plt.plot([D[0], A[0]], [D[1], A[1]], 'g-')
+            plt.plot([A[0], C[0]], [A[1], C[1]], 'g-')
+
+        # If y is not inside any triangle, skip this point
+        if not inside_ABC and not inside_CDA:
+            results.append((y, "Skipped: Outside both triangles ABC and CDA", None, None, None))
+            continue
+
+        # Compute the approximation and true value of f(y) and the absolute error
+        try:
+            f_y_true, f_y_approx, abs_error = compute_approximation_and_true_value(f, X, y, A, B, C, D, inside_ABC, bary_coords_ABC, inside_CDA, bary_coords_CDA)
+            results.append((y, "Processed", f_y_true, f_y_approx, abs_error))
+        except ValueError as e:
+            results.append((y, f"Skipped: Error occurred - {e}", None, None, None))
+            continue
+
+    # Plotting details
+    plt.xlabel('x1')
+    plt.ylabel('x2')
+
+    # Remove duplicate legend entries and only show y-points
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    unique_labels = {label: handle for label, handle in by_label.items() if label.startswith('y=')}
+    plt.legend(unique_labels.values(), unique_labels.keys())
+
+    plt.title('Points and Triangles')
+    plt.grid(True)
+    plt.show()
+
+    return results
