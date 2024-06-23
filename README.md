@@ -6,11 +6,11 @@ Frederik Nellerod Nordentoft, hnw220
 This repository contains:  
 1. Inaugural project incl. a README, a notebook file and a py-file. We model an exchange economy.
 2. Data project incl. a README, a notebook file, a py-file and plots/graphs from the project. We fetch data from **Danish Statistics, table IDRAKT01 and FOLK1A** on Danish football players.
-3. Model project incl. a README, a notebook file and a py-file.. We model an IS-LM model.
+3. Model project incl. a README, a notebook file and a py-file. We model an IS-LM model.
 3. Exam project incl. a README, a notebook file and 3 py-files (1 for each Problem in the exam).
 
 # Inaugural project
-The purpose of this project is to analyze a exchange economy with two consumers, A and B, and two goods, x1 and x2. 
+The purpose of this project is to analyze an exchange economy with two consumers, A and B, and two goods, x1 and x2. 
 The **results** of the project can be seen from running [inauguralproject.ipynb](inauguralproject.ipynb), which depends on [inauguralproject.py](inauguralproject.py).
 
 # Data analysis project
