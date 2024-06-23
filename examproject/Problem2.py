@@ -12,19 +12,11 @@ class CareerChoiceClass:
         self.sigma = 2
         self.v = np.array([1, 2, 3])
         self.c = 1
-    
-    """
-    Question 1:
-    """
+
     def simulate_utilities(self):
         """
         Method to simulate the utility for each career choice
 
-        args:
-            j (int): career choice
-            epsilon (np.array): random error term of utility
-            sigma (float): standard deviation of error term
-            v (np.array): utility for each career choice
         returns:
             expected_utilities: expected utility for each career choice
             realized_utilities: average realized utility for each career choice
@@ -48,17 +40,9 @@ class CareerChoiceClass:
         expected_utilities, realized_utilities = self.simulate_utilities() 
         return expected_utilities, realized_utilities
 
-    """
-    Question 2: Friends
-    """
     def simulate_new_scenario(self):
         """
-        args:
-            N: (int) number of friends
-            J: (int) number of career choices
-            K: (int) number of simulations
-            sigma: (float) standard deviation of error term
-            v: (np.array) utility for each career choice
+        Method to simulate the career choice model with friends
         returns:
             career_choices: (np.array) career choice for each friend
             prior_expectations: (np.array) prior expected utility for each friend
@@ -109,12 +93,14 @@ class CareerChoiceClass:
         plt.title('Average Subjective Expected Utility and Realized Utility')
         plt.show()
 
-    """
-    Question 3: Switching Scenario
-    """
     def simulate_switching_scenario(self):
         """
         Simulate the switching scenario to calculate the switching decisions and new realized utilities
+        returns:
+            switch_decisions: switching decisions
+            new_realized_utilities: new realized utilities
+            new_subjective_utilities: new subjective utilities
+            career_choices: career choices
         """
         np.random.seed(2024)  # For reproducibility
         career_choices, prior_expectations, realized_utilities = self.simulate_new_scenario() # Simulate the career choices, prior expected utilities, and realized utilities
