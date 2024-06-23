@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import fsolve
-from scipy.optimize import minimize
+from scipy.optimize import fsolve, minimize_scalar, minimize
 
 class ProductionEconomy:
     """
@@ -29,8 +28,9 @@ class ProductionEconomy:
         self.tau = 0.0
         self.T = 0.0
         self.w = 1.0
-        self.p1 = 1.0
-        self.p2 = 1.0
+        self.p1 = 1.0 # setting the price of good 1 to an arbitrary value (default value)
+        self.p2 = 1.0 # setting the price of good 2 to an arbitrary value (default value)
+        self.kappa = 0.1 # Arbitrary value for kappa, can be adjusted
 
     def set_prices(self, p1, p2):
         """
@@ -103,25 +103,23 @@ class ProductionEconomy:
         Returns:
             Utility value.
         """
-        pi_1 = self.optimal_profit(self.p1, self.w) # Firm 1 profit 
-        pi_2 = self.optimal_profit(self.p2, self.w) # Firm 2 profit
-        c1, c2 = self.consumer_behavior(l, pi_1, pi_2) # Consumption of goods 1 and 2 given firm 1 and 2 profits
+        pi_1 = self.optimal_profit(self.p1, self.w)  # Firm 1 profit
+        pi_2 = self.optimal_profit(self.p2, self.w)  # Firm 2 profit
+        c1, c2 = self.consumer_behavior(l, pi_1, pi_2)  # Consumption of goods 1 and 2 given firm 1 and 2 profits
         return np.log(c1 ** self.alpha * c2 ** (1 - self.alpha)) - self.nu * (l ** (1 + self.epsilon) / (1 + self.epsilon))
 
     def consumer_behavior(self, l, pi_1, pi_2):
-        """
-        Calculates consumption quantities of two goods based on labor supplied and profits from two firms.
-
-        Parameters:
-            l: Labor supplied by the consumer.
-            pi_1: Profit from firm 1.
-            pi_2: Profit from firm 2.
-
-        Returns:
-            Consumption of goods 1 and 2 (c1, c2).
-        """
-        c1 = self.alpha * (self.w * l + self.T + pi_1 + pi_2) / self.p1 
-        c2 = (1 - self.alpha) * (self.w * l + self.T + pi_1 + pi_2) / (self.p2 + self.tau) 
+        # Initial total income without T
+        initial_total_income = self.w * l + pi_1 + pi_2
+        # Calculate c2 first without considering T
+        c2 = (1 - self.alpha) * initial_total_income / (self.p2 + self.tau)
+        # Calculate T as tau * c2
+        self.T = self.tau * c2
+        # Recalculate total income including T
+        total_income = self.w * l + self.T + pi_1 + pi_2
+        # Calculate c1 and c2 with the updated total income
+        c1 = self.alpha * total_income / self.p1
+        c2 = (1 - self.alpha) * total_income / (self.p2 + self.tau)
         return c1, c2
 
     def plot_labor_market_clearing(self, p1_range, p2_range):
@@ -281,3 +279,128 @@ class ProductionEconomy:
         print(f"  Production of Good 2: {y2_star:.2f}")
         print(f"  Consumption of Good 2: {c2_star:.2f}")
         print(f"  -> Market 2 {'clears' if np.isclose(y2_star, c2_star) else 'does not clear'}")
+
+    def calculate_swf(self, l, kappa):
+        """
+        Calculates the Social Welfare Function (SWF) given the utility and optimal production of good 2.
+        """
+        utility = self.utility_function(l)
+        optimal_l2 = self.optimal_labor_demand(self.p2, self.w)
+        y2_star = self.optimal_production(optimal_l2)
+        swf = utility - kappa * y2_star
+        return swf
+
+    def calculate_swf_for_different_taus(self, tau_values, kappa):
+        """
+        Calculates the SWF for different values of tau.
+
+        Parameters:
+            tau_values: An array of tau values to iterate over.
+            kappa: the social cost of carbon emitted by production of y in equilibrium
+
+        Returns:
+            A list of tuples containing tau values and their corresponding SWF values.
+        """
+        swf_values = []
+        
+        # Iterate over the tau values
+        for tau in tau_values:
+            self.tau = tau  # Set the new value of tau
+            equilibrium_prices = self.market_clearing_prices()  # Recalculate prices for the current tau
+            self.set_prices(*equilibrium_prices)  # Set the new prices for goods 1 and 2
+            optimal_l = self.maximize_utility() # Find the optimal labor supply given the new prices
+            if optimal_l is not None:  # Check if the optimization was successful
+                swf = self.calculate_swf(optimal_l, kappa) # Calculate the SWF
+                swf_values.append((tau, swf)) # Append the tau and SWF values to the list
+
+        return swf_values
+
+    def plot_swf_for_different_taus(self, tau_values, kappa):
+        """
+        Plots the SWF for different values of tau.
+        """
+        # Calculate the SWF values for different tau values
+        swf_values = self.calculate_swf_for_different_taus(tau_values, kappa)
+
+        taus, swfs = zip(*swf_values)
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(taus, swfs, marker='o', linestyle='-', color='blue')
+        plt.xlabel('Tax Rate ($\\tau$)')
+        plt.ylabel('Social Welfare Function (SWF)')
+        plt.title('SWF for Different Values of $\\tau$')
+        plt.grid(True)
+        plt.show()
+    
+    def calculate_swf_for_tau(self, tau, kappa):
+        """
+        Calculates the SWF for a given value of tau.
+        Returns: The SWF for the given tau.
+        """
+        self.tau = tau
+        equilibrium_prices = self.market_clearing_prices()  # Recalculate prices for the current tau
+        self.set_prices(*equilibrium_prices)  # Set the new prices
+        optimal_l = self.maximize_utility()
+        if optimal_l is not None:
+            swf = self.calculate_swf(optimal_l, kappa)
+            return swf
+        else:
+            return np.inf  # Return a large value if the optimization fails
+
+    def find_optimal_tau(self, kappa, tau_bounds):
+        """
+        Finds the value of tau that gives the highest SWF using numerical optimization.
+        Returns: The optimal value of tau and the corresponding SWF.
+        """
+        result = minimize_scalar(lambda tau: -self.calculate_swf_for_tau(tau, kappa), bounds=tau_bounds, method='bounded')
+        optimal_tau = result.x
+        optimal_swf = -result.fun
+        return optimal_tau, optimal_swf
+
+    def calculate_optimal_tau_and_market_conditions(self, kappa, tau_bounds):
+        # Find the optimal tau and the corresponding SWF
+        optimal_tau, optimal_swf = self.find_optimal_tau(kappa=kappa, tau_bounds=tau_bounds)
+
+        # Set the tau to the optimal value
+        self.tau = float(optimal_tau)  # Ensure it is a scalar float
+
+        # Calculate the equilibrium prices
+        equilibrium_prices = self.market_clearing_prices()
+        p1, p2 = equilibrium_prices
+
+        # Set the prices in the ProductionEconomy instance
+        self.set_prices(p1, p2)
+
+        # Calculate the optimal labor supply
+        optimal_l = self.maximize_utility()
+
+        # Calculate the production and consumption values
+        optimal_l1 = self.optimal_labor_demand(p1, self.w)
+        optimal_l2 = self.optimal_labor_demand(p2, self.w)
+        y1 = self.optimal_production(optimal_l1)
+        y2 = self.optimal_production(optimal_l2)
+        pi_1 = self.optimal_profit(p1, self.w)
+        pi_2 = self.optimal_profit(p2, self.w)
+        c1, c2 = self.consumer_behavior(optimal_l, pi_1, pi_2)
+
+        # Calculate the lump-sum transfer T
+        T = self.T
+
+        # Convert NumPy arrays to scalars if needed
+        y1 = float(y1) if isinstance(y1, np.ndarray) else y1
+        c1 = float(c1) if isinstance(c1, np.ndarray) else c1
+        y2 = float(y2) if isinstance(y2, np.ndarray) else y2
+        c2 = float(c2) if isinstance(c2, np.ndarray) else c2
+        optimal_tau = float(optimal_tau) if isinstance(optimal_tau, np.ndarray) else optimal_tau
+        T = float(T) if isinstance(T, np.ndarray) else T
+        optimal_swf = float(optimal_swf) if isinstance(optimal_swf, np.ndarray) else optimal_swf
+
+        # Return the results as a dictionary
+        return {
+            "optimal_tau": optimal_tau,
+            "optimal_swf": optimal_swf,
+            "equilibrium_prices": (p1, p2),
+            "consumptions": (c1, c2),
+            "productions": (y1, y2),
+            "lump_sum_transfer": T
+        }
