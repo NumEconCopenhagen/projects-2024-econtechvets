@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from ipywidgets import interact, Checkbox, fixed
 
 def find_points(X, y): 
     """
@@ -33,37 +32,31 @@ def find_points(X, y):
 
     return A, B, C, D # Return the points A, B, C, D
 
-def plot_interactive(X, y, A, B, C, D, show_random_points, show_abc, show_cda, show_points): 
+def plot_points_and_triangles(X, y, A, B, C, D): 
     """
-    Plot the points and triangles in an interactive plot
+    Plot the points and triangles without interactive features.
     """
     plt.figure(figsize=(8, 8))
-    if show_random_points: 
-        plt.scatter(X[:, 0], X[:, 1], color='blue', label='Random Points')
+    plt.scatter(X[:, 0], X[:, 1], color='blue', label='Random Points')
     plt.scatter(y[0], y[1], color='red', label='y', zorder=5)
 
-    if show_points:
-        # Plot A, B, C, D if they exist
-        if A is not None: 
-            plt.scatter(A[0], A[1], color='green', label='A', zorder=5)
-        if B is not None:
-            plt.scatter(B[0], B[1], color='purple', label='B', zorder=5)
-        if C is not None:
-            plt.scatter(C[0], C[1], color='orange', label='C', zorder=5)
-        if D is not None:
-            plt.scatter(D[0], D[1], color='brown', label='D', zorder=5)
+    if A is not None: 
+        plt.scatter(A[0], A[1], color='green', label='A', zorder=5)
+    if B is not None:
+        plt.scatter(B[0], B[1], color='purple', label='B', zorder=5)
+    if C is not None:
+        plt.scatter(C[0], C[1], color='orange', label='C', zorder=5)
+    if D is not None:
+        plt.scatter(D[0], D[1], color='brown', label='D', zorder=5)
 
-    # Plot triangles
-    if show_abc:
-        if A is not None and B is not None and C is not None:
-            plt.plot([A[0], B[0]], [A[1], B[1]], 'r-', label='Triangle ABC')
-            plt.plot([B[0], C[0]], [B[1], C[1]], 'r-')
-            plt.plot([C[0], A[0]], [C[1], A[1]], 'r-')
-    if show_cda:
-        if C is not None and D is not None and A is not None:
-            plt.plot([C[0], D[0]], [C[1], D[1]], 'g-', label='Triangle CDA')
-            plt.plot([D[0], A[0]], [D[1], A[1]], 'g-')
-            plt.plot([A[0], C[0]], [A[1], C[1]], 'g-')
+    if A is not None and B is not None and C is not None:
+        plt.plot([A[0], B[0]], [A[1], B[1]], 'r-', label='Triangle ABC')
+        plt.plot([B[0], C[0]], [B[1], C[1]], 'r-')
+        plt.plot([C[0], A[0]], [C[1], A[1]], 'r-')
+    if C is not None and D is not None and A is not None:
+        plt.plot([C[0], D[0]], [C[1], D[1]], 'g-', label='Triangle CDA')
+        plt.plot([D[0], A[0]], [D[1], A[1]], 'g-')
+        plt.plot([A[0], C[0]], [A[1], C[1]], 'g-')
 
     plt.xlabel('x1')
     plt.ylabel('x2')
@@ -71,22 +64,6 @@ def plot_interactive(X, y, A, B, C, D, show_random_points, show_abc, show_cda, s
     plt.title('Points and Triangles')
     plt.grid(True)
     plt.show()
-
-def interactive_plot(X, y, A, B, C, D):
-    """
-    Create the interactive plot
-    """    
-    interact(plot_interactive,
-             X=fixed(X),
-             y=fixed(y),
-             A=fixed(A),
-             B=fixed(B),
-             C=fixed(C),
-             D=fixed(D),
-             show_random_points=Checkbox(value=True, description='Show Random Points'),
-             show_abc=Checkbox(value=True, description='Show Triangle ABC'),
-             show_cda=Checkbox(value=True, description='Show Triangle CDA'),
-             show_points=Checkbox(value=True, description='Show Points A, B, C, D'))
 
 def barycentric_coordinates(A,B,C, y):
     """
@@ -205,7 +182,6 @@ def plot_and_compute_results(X, Y, f):
 
     Returns: A list of tuples containing the results for each point y in Y.
     """
-    # Initialize lists to store results
     results = []
 
     # Define colors for each point in Y
