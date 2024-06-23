@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 
 def find_points(X, y): 
     """
-    Find the points A, B, C, D in X that are closest to y and store them
+    Find the points A, B, C, D in X that are closest to y and store them.
+    Returns: 
+        A, B, C, D : The points in X that are closest to y and satisfy the conditions for A, B, C, D.
     """
     A = None # variable to store the point A
     B = None # variable to store the point B
@@ -68,9 +70,8 @@ def plot_points_and_triangles(X, y, A, B, C, D):
 def barycentric_coordinates(A,B,C, y):
     """
     Compute barycentric coordinates of point y with respect to an arbitrary triangle ABC.
-
     Returns:
-    r1, r2, r3 : Barycentric coordinates of the point y with respect to triangle ABC.
+        r1, r2, r3 : Barycentric coordinates of the point y with respect to triangle ABC.
     """
     A1, A2 = A # Extract coordinates of A, B and C
     B1, B2 = B 
@@ -87,7 +88,6 @@ def barycentric_coordinates(A,B,C, y):
 def is_inside_triangle(r1, r2, r3): 
     """
     Function to check if the point is inside the triangle
-    
     Returns (bool): True if the point is inside the triangle, False otherwise.
     """
     return (0 <= r1 <= 1) and (0 <= r2 <= 1) and (0 <= r3 <= 1)
@@ -95,6 +95,7 @@ def is_inside_triangle(r1, r2, r3):
 def check_point_in_triangles(A, B, C, D, y):
     """
     Function to check if a point y is inside the triangles ABC and CDA specifically
+    Returns (tuple): Tuple containing the results of the check for each triangle.
     """
     # Compute barycentric coordinates for triangles ABC and CDA
     r1_ABC, r2_ABC, r3_ABC = barycentric_coordinates(A, B, C, y)
@@ -111,7 +112,6 @@ def check_point_in_triangles(A, B, C, D, y):
 def compute_approximation_and_true_value(f, X, y, A, B, C, D, inside_ABC, bary_coords_ABC, inside_CDA, bary_coords_CDA):
     """
     Compute the approximation of f(y) using barycentric interpolation and compare it with the true value.
-    
     Parameters:
     f: function
         The function to be approximated.
@@ -172,7 +172,6 @@ def compute_approximation_and_true_value(f, X, y, A, B, C, D, inside_ABC, bary_c
     print(f"True value of f({y[0]}, {y[1]}): {f_y_true:.5f}")
     print(f"Approximated value of f({y[0]}, {y[1]}): {f_y_approx:.5f}")
     print(f"Absolute error between the approximated and true value: {abs_error:.5f}")
-
 
     return f_y_true, f_y_approx, abs_error
 

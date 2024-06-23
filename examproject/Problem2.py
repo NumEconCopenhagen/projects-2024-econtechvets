@@ -30,7 +30,6 @@ class CareerChoiceClass:
         np.random.seed(2024)  # For reproducibility
         expected_utilities = np.zeros(self.J)
         realized_utilities = np.zeros(self.J)
-        
 
         for j in range(self.J):
             epsilon = np.random.normal(0, self.sigma, self.K)

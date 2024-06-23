@@ -117,6 +117,15 @@ class ProductionEconomy:
 
 
     def consumer_behavior(self, l, pi_1, pi_2):
+        """
+        Calculates the consumption of goods 1 and 2 given labor supply and profits of firms 1 and 2.
+        Parameters:
+            l: Labor supply.
+            pi_1: Profit of firm 1.
+            pi_2: Profit of firm 2.
+        Returns:
+            Consumption of goods 1 and 2.
+        """
         epsilon = 1e-6  # Small positive value to avoid zero or negative consumption
         # Initial total income without T
         initial_total_income = self.w * l + pi_1 + pi_2
@@ -228,6 +237,8 @@ class ProductionEconomy:
     def market_clearing_prices(self):
         """
         Calculates the equilibrium prices for goods 1 and 2 by solving the system of equations for market clearing.
+        Returns:
+            Equilibrium prices for goods 1 and 2.
         """
         def equations(p):
             p1, p2 = p 
@@ -261,11 +272,12 @@ class ProductionEconomy:
             return [1.0, 1.0]  # Return initial guesses if the solution is invalid
         return equilibrium_prices
 
-
-
     def calculate_market_conditions(self, p1, p2):
         """ Method created to calculate the market conditions for goods 1 and 2 given prices p1 and p2. 
             The method prints the results of the calculations to check if the markets clear or not.
+            Parameters: 
+                p1: price of good 1
+                p2: price of good 2
         """
         self.set_prices(p1, p2)
         optimal_l = self.maximize_utility()  # Find the optimal labor supply
@@ -302,6 +314,11 @@ class ProductionEconomy:
     def calculate_swf(self, l, kappa):
         """
         Calculates the Social Welfare Function (SWF) given the utility and optimal production of good 2.
+        Parameters:
+            l: Labor supply.
+            kappa: Social cost of carbon emitted by production of y in equilibrium.
+        Returns:
+            The calculated SWF.
         """
         utility = self.utility_function(l)
         optimal_l2 = self.optimal_labor_demand(self.p2, self.w)
@@ -352,7 +369,11 @@ class ProductionEconomy:
     def calculate_swf_for_tau(self, tau, kappa):
         """
         Calculates the SWF for a given value of tau.
-        Returns: The SWF for the given tau.
+        Parameters:
+            tau: The tax rate.
+            kappa: The social cost of carbon emitted by production of y in equilibrium.
+        Returns: 
+            The SWF for the given tau.
         """
         self.tau = tau
         equilibrium_prices = self.market_clearing_prices()  # Recalculate prices for the current tau
@@ -367,11 +388,14 @@ class ProductionEconomy:
                 return swf
         return np.inf  # Return a large value if the optimization fails or SWF is invalid
 
-
     def find_optimal_tau(self, kappa, tau_bounds):
         """
         Finds the value of tau that gives the highest SWF using numerical optimization.
-        Returns: The optimal value of tau and the corresponding SWF.
+        Parameters:
+            kappa: The social cost of carbon emitted by production of y in equilibrium.
+            tau_bounds: The bounds for the tax rate tau.
+        Returns: 
+            The optimal value of tau and the corresponding SWF.
         """
         result = minimize_scalar(lambda tau: -self.calculate_swf_for_tau(tau, kappa), bounds=tau_bounds, method='bounded')
         optimal_tau = result.x
@@ -379,6 +403,14 @@ class ProductionEconomy:
         return optimal_tau, optimal_swf
 
     def calculate_optimal_tau_and_market_conditions(self, kappa, tau_bounds):
+        """
+        Finds the optimal value of tau and calculates the equilibrium prices, consumptions, productions, and lump-sum transfer.
+        Parameters:
+            kappa: The social cost of carbon emitted by production of y in equilibrium.
+            tau_bounds: The bounds for the tax rate tau.
+        Returns:
+            A dictionary containing the optimal tau, optimal SWF, equilibrium prices, consumptions, productions, and lump-sum transfer.
+        """
         # Find the optimal tau and the corresponding SWF
         optimal_tau, optimal_swf = self.find_optimal_tau(kappa=kappa, tau_bounds=tau_bounds)
 

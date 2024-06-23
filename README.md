@@ -33,3 +33,9 @@ Apart from a standard Anaconda Python 3 installation, the project requires no pa
 ``pip install git+https://github.com/alemartinello/dstapi``
 ``pip install geopandas``
 ``pip install ipywidgets``
+
+# Sources
+The solutions and methodologies applied in this project have been developed using various tools and resources. The primary sources include:
+1. ChatGPT: Extensively used throughout all problem sets to provide guidance, explanations, and code snippets.
+2. Lecture Notes: Utilized for theoretical background and foundational concepts in all projects
+3. Danish Statistics: Data sources for the data analysis project, specifically tables IDRAKT01 and FOLK1A.
