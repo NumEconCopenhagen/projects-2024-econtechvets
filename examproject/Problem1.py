@@ -28,14 +28,13 @@ class ProductionEconomy:
         self.tau = 0.0
         self.T = 0.0
         self.w = 1.0
-        self.p1 = 1.0 # setting the price of good 1 to an arbitrary value (default value)
-        self.p2 = 1.0 # setting the price of good 2 to an arbitrary value (default value)
-        self.kappa = 0.1 # Arbitrary value for kappa, can be adjusted
+        self.p1 = 1.0  # setting the price of good 1 to an arbitrary value (default value)
+        self.p2 = 1.0  # setting the price of good 2 to an arbitrary value (default value)
+        self.kappa = 0.1  # Arbitrary value for kappa, can be adjusted
 
     def set_prices(self, p1, p2):
         """
         Sets the market prices for goods 1 and 2.
-
         Parameters:
             p1: Price of good 1.
             p2: Price of good 2.
@@ -46,11 +45,9 @@ class ProductionEconomy:
     def optimal_labor_demand(self, p, w):
         """
         Computes the optimal labor demand according to the function given in the exam question incl. given price and wage.
-
         Parameters:
             p: Price of the good.
             w: Wage rate.
-
         Returns:
             Optimal labor demand given price and wage.
         """
@@ -59,10 +56,8 @@ class ProductionEconomy:
     def optimal_production(self, l):
         """
         Calculates production output based on labor according to the function given in the exam question.
-
         Parameter:
             l: Labor input.
-
         Returns:
             Production output given labor.
         """
@@ -71,11 +66,9 @@ class ProductionEconomy:
     def optimal_profit(self, p, w):
         """
         Calculates profit for a firm given according to the function given in the exam question given price and wage.
-
         Parameters:
             p: Price of the good.
             w: Wage rate.
-
         Returns:
             Optimal profit given price and wage.
         """
@@ -85,30 +78,46 @@ class ProductionEconomy:
     def maximize_utility(self):
         """
         Maximizes the utility of the central agent using numerical optimization.
-
         Returns:
             Labor supply that maximizes utility given the prices of goods 1 and 2.
         """
-        from scipy.optimize import minimize
-        result = minimize(lambda l: -self.utility_function(l), [0.1], bounds=[(0, None)])
-        return result.x if result.success else None
+        def objective(l):
+            if l <= 0:
+                return np.inf
+            utility = self.utility_function(l)
+            if np.isnan(utility) or np.isinf(utility):
+                return np.inf
+            return -utility
+
+        initial_guess = 0.1  # Set a better initial guess to avoid zero labor supply
+        result = minimize(objective, [initial_guess], bounds=[(1e-6, None)])  # Use a small positive lower bound
+        if result.success and not np.isnan(result.x[0]) and not np.isinf(result.x[0]):
+            return result.x[0]
+        return 0.0  # Return 0.0 if optimization fails
+
 
     def utility_function(self, l):
         """
         Utility function as a function of labor supply.
-
         Parameter:
             l: Labor supplied by the agent.
-
         Returns:
             Utility value.
         """
         pi_1 = self.optimal_profit(self.p1, self.w)  # Firm 1 profit
         pi_2 = self.optimal_profit(self.p2, self.w)  # Firm 2 profit
         c1, c2 = self.consumer_behavior(l, pi_1, pi_2)  # Consumption of goods 1 and 2 given firm 1 and 2 profits
-        return np.log(c1 ** self.alpha * c2 ** (1 - self.alpha)) - self.nu * (l ** (1 + self.epsilon) / (1 + self.epsilon))
+        if c1 <= 0 or c2 <= 0 or np.isnan(c1) or np.isnan(c2) or np.isinf(c1) or np.isinf(c2):
+            print(f"Invalid consumption values for labor supply {l}: c1={c1}, c2={c2}")
+            return -np.inf  # Return negative infinity if consumption is not valid
+        utility = np.log(c1 ** self.alpha * c2 ** (1 - self.alpha)) - self.nu * (l ** (1 + self.epsilon) / (1 + self.epsilon))
+        if np.isnan(utility) or np.isinf(utility):
+            print(f"Invalid utility for labor supply {l}: {utility}")
+        return utility
+
 
     def consumer_behavior(self, l, pi_1, pi_2):
+        epsilon = 1e-6  # Small positive value to avoid zero or negative consumption
         # Initial total income without T
         initial_total_income = self.w * l + pi_1 + pi_2
         # Calculate c2 first without considering T
@@ -120,28 +129,28 @@ class ProductionEconomy:
         # Calculate c1 and c2 with the updated total income
         c1 = self.alpha * total_income / self.p1
         c2 = (1 - self.alpha) * total_income / (self.p2 + self.tau)
-        return c1, c2
+        return max(c1, epsilon), max(c2, epsilon)
+
 
     def plot_labor_market_clearing(self, p1_range, p2_range):
         """
         Plots the labor market clearing condition by iterating over specified ranges for p1 and p2.
-
         Parameters:
             p1_range: A range of prices for good 1.
             p2_range: A range of prices for good 2.
         """
-        total_labor_demand = [] # creating empty lists to store the results for labor demand, l1 + l2
-        optimal_labor_supply = [] # creating empty lists to store the results for labor supply, l*
+        total_labor_demand = []  # creating empty lists to store the results for labor demand, l1 + l2
+        optimal_labor_supply = []  # creating empty lists to store the results for labor supply, l*
 
-        for price1 in p1_range: # iterating over the range of prices for good 1
-            for price2 in p2_range: # iterating over the range of prices for good 2
+        for price1 in p1_range:  # iterating over the range of prices for good 1
+            for price2 in p2_range:  # iterating over the range of prices for good 2
                 self.set_prices(price1, price2) 
                 optimal_l = self.maximize_utility() 
                 if optimal_l is not None: 
-                    optimal_l1 = self.optimal_labor_demand(price1, self.w) # calculating optimal labor demand for good 1
-                    optimal_l2 = self.optimal_labor_demand(price2, self.w) # calculating optimal labor demand for good 2
-                    total_labor_demand.append(optimal_l1 + optimal_l2) # calculating total labor demand
-                    optimal_labor_supply.append(optimal_l) # calculating labor supply
+                    optimal_l1 = self.optimal_labor_demand(price1, self.w)  # calculating optimal labor demand for good 1
+                    optimal_l2 = self.optimal_labor_demand(price2, self.w)  # calculating optimal labor demand for good 2
+                    total_labor_demand.append(optimal_l1 + optimal_l2)  # calculating total labor demand
+                    optimal_labor_supply.append(optimal_l)  # calculating labor supply
 
         # Plotting the results
         plt.figure(figsize=(10, 6))
@@ -158,22 +167,22 @@ class ProductionEconomy:
         """
         Plots the market clearing condition for good 1 by iterating over a range of prices for p1. prices horizontally. difference between production and consumption vertically.
         """
-        p1 = np.linspace(0.1, 2, 10) # creating a range of prices for good 1 given the specifications in the question
-        price_values = [] # creating empty lists to store the results for price values
-        differences = [] # creating empty lists to store the results for differences between production and consumption
+        p1 = np.linspace(0.1, 2, 10)  # creating a range of prices for good 1 given the specifications in the question
+        price_values = []  # creating empty lists to store the results for price values
+        differences = []  # creating empty lists to store the results for differences between production and consumption
 
-        for price1 in p1: # iterating over the range of prices for good 1
-            self.set_prices(price1, p2=1.0) # setting the price of good 1 according to the specifications. Choosing an arbitrary fixed price for good 2
+        for price1 in p1:  # iterating over the range of prices for good 1
+            self.set_prices(price1, p2=1.0)  # setting the price of good 1 according to the specifications. Choosing an arbitrary fixed price for good 2
             optimal_l = self.maximize_utility() 
             if optimal_l is not None:
-                optimal_l1 = self.optimal_labor_demand(price1, self.w) # calculating optimal labor demand for good 1
-                prod_y1 = self.optimal_production(optimal_l1) # calculating production output for good 1
-                pi_1 = self.optimal_profit(price1, self.w) # calculating profit for firm 1
+                optimal_l1 = self.optimal_labor_demand(price1, self.w)  # calculating optimal labor demand for good 1
+                prod_y1 = self.optimal_production(optimal_l1)  # calculating production output for good 1
+                pi_1 = self.optimal_profit(price1, self.w)  # calculating profit for firm 1
                 pi_2 = self.optimal_profit(1.0, self.w)  # calculating profit for firm 2 given arbitrary fixed price for good 2
-                cons_c1, _ = self.consumer_behavior(optimal_l, pi_1, pi_2) # calculating consumption of good 1
+                cons_c1, _ = self.consumer_behavior(optimal_l, pi_1, pi_2)  # calculating consumption of good 1
 
-                price_values.append(price1) # appending the price values to the list
-                differences.append(prod_y1 - cons_c1) # appending the differences between production and consumption to the list (if 0, we have market clearing)
+                price_values.append(price1)  # appending the price values to the list
+                differences.append(prod_y1 - cons_c1)  # appending the differences between production and consumption to the list (if 0, we have market clearing)
 
         plt.figure(figsize=(10, 6))
         plt.plot(price_values, differences, marker='o', linestyle='-', color='blue')
@@ -189,22 +198,22 @@ class ProductionEconomy:
         """
         Plots the market clearing condition for good 2 by iterating over a range of prices for p2. prices horizontally. difference between production and consumption vertically.
         """
-        p2 = np.linspace(0.1, 2, 10) # creating a range of prices for good 2 given the specifications in the question
-        price_values = [] # creating empty lists to store the results for price values
-        differences = [] # creating empty lists to store the results for differences between production and consumption
+        p2 = np.linspace(0.1, 2, 10)  # creating a range of prices for good 2 given the specifications in the question
+        price_values = []  # creating empty lists to store the results for price values
+        differences = []  # creating empty lists to store the results for differences between production and consumption
 
-        for price2 in p2: # iterating over the range of prices for good 2
-            self.set_prices(self.p1, price2) # setting the price of good 2 according to the specifications. Using an arbitrary fixed price for good 1
+        for price2 in p2:  # iterating over the range of prices for good 2
+            self.set_prices(self.p1, price2)  # setting the price of good 2 according to the specifications. Using an arbitrary fixed price for good 1
             optimal_l = self.maximize_utility() 
             if optimal_l is not None:
-                optimal_l2 = self.optimal_labor_demand(price2, self.w) # calculating optimal labor demand for good 2
-                prod_y2 = self.optimal_production(optimal_l2) # calculating production output for good 2
+                optimal_l2 = self.optimal_labor_demand(price2, self.w)  # calculating optimal labor demand for good 2
+                prod_y2 = self.optimal_production(optimal_l2)  # calculating production output for good 2
                 pi_1 = self.optimal_profit(1.0, self.w)  # calculating profit for firm 1 given arbitrary fixed price for good 1
-                pi_2 = self.optimal_profit(price2, self.w) # calculating profit for firm 2
-                _, cons_c2 = self.consumer_behavior(optimal_l, pi_1, pi_2) # calculating consumption of good 2
+                pi_2 = self.optimal_profit(price2, self.w)  # calculating profit for firm 2
+                _, cons_c2 = self.consumer_behavior(optimal_l, pi_1, pi_2)  # calculating consumption of good 2
 
-                price_values.append(price2) # appending the price values to the list
-                differences.append(prod_y2 - cons_c2) # appending the differences between production and consumption to the list (if 0, we have market clearing)
+                price_values.append(price2)  # appending the price values to the list
+                differences.append(prod_y2 - cons_c2)  # appending the differences between production and consumption to the list (if 0, we have market clearing)
 
         plt.figure(figsize=(10, 6))
         plt.plot(price_values, differences, marker='o', linestyle='-', color='blue')
@@ -219,30 +228,40 @@ class ProductionEconomy:
     def market_clearing_prices(self):
         """
         Calculates the equilibrium prices for goods 1 and 2 by solving the system of equations for market clearing.
-
         """
-        def equations(p): # defining the system of equations for market clearing
+        def equations(p):
             p1, p2 = p 
             self.set_prices(p1, p2) 
-            l_star = self.maximize_utility() # calculating optimal labor supply using the method defined above
+            l_star = self.maximize_utility()  # calculating optimal labor supply using the method defined above
+
+            if l_star is None or l_star <= 0 or np.isnan(l_star) or np.isinf(l_star):
+                return [np.inf, np.inf]  # Return large values if optimization fails
+
+            l1_star = self.optimal_labor_demand(p1, self.w)  # calculating optimal labor demand for good 1
+            l2_star = self.optimal_labor_demand(p2, self.w)  # calculating optimal labor demand for good 2
             
-            l1_star = self.optimal_labor_demand(p1, self.w) # calculating optimal labor demand for good 1
-            l2_star = self.optimal_labor_demand(p2, self.w) # calculating optimal labor demand for good 2
+            y1_star = self.optimal_production(l1_star)  # calculating production output for good 1
+            y2_star = self.optimal_production(l2_star)  # calculating production output for good 2
             
-            y1_star = self.optimal_production(l1_star) # calculating production output for good 1
-            y2_star = self.optimal_production(l2_star) # calculating production output for good 2
+            pi_1 = self.optimal_profit(p1, self.w)  # calculating profit for firm 1
+            pi_2 = self.optimal_profit(p2, self.w)  # calculating profit for firm 2
+            c1_star, c2_star = self.consumer_behavior(l_star, pi_1, pi_2)  # calculating consumption of goods 1 and 2
             
-            pi_1 = self.optimal_profit(p1, self.w) # calculating profit for firm 1
-            pi_2 = self.optimal_profit(p2, self.w) # calculating profit for firm 2
-            c1_star, c2_star = self.consumer_behavior(l_star, pi_1, pi_2) # calculating consumption of goods 1 and 2
-            
+            if np.isnan(y1_star) or np.isnan(c1_star) or np.isnan(y2_star) or np.isnan(c2_star) or \
+            np.isinf(y1_star) or np.isinf(c1_star) or np.isinf(y2_star) or np.isinf(c2_star):
+                return [np.inf, np.inf]  # Return large values if any calculation results in NaN or inf
+
             # Return a flattened array of differences
-            return np.array([y1_star - c1_star, y2_star - c2_star]).flatten() # returning the differences between production and consumption for goods 1 and 2 that are also market clearing condition 1+2
+            return [y1_star - c1_star, y2_star - c2_star]  # returning the differences between production and consumption for goods 1 and 2 that are also market clearing condition 1+2
 
         # Initial guesses for p1 and p2
-        initial_guesses = [1.0, 1.0] # setting initial guesses for prices of goods 1 and 2 (arbritrary values)
-        equilibrium_prices = fsolve(equations, initial_guesses) # solving the system of equations using fsolve until market clearing conditions are met
+        initial_guesses = [1.0, 1.0]  # setting initial guesses for prices of goods 1 and 2 (arbitrary values)
+        equilibrium_prices = fsolve(equations, initial_guesses)  # solving the system of equations using fsolve until market clearing conditions are met
+        if np.isnan(equilibrium_prices).any() or np.isinf(equilibrium_prices).any():
+            return [1.0, 1.0]  # Return initial guesses if the solution is invalid
         return equilibrium_prices
+
+
 
     def calculate_market_conditions(self, p1, p2):
         """ Method created to calculate the market conditions for goods 1 and 2 given prices p1 and p2. 
@@ -293,11 +312,9 @@ class ProductionEconomy:
     def calculate_swf_for_different_taus(self, tau_values, kappa):
         """
         Calculates the SWF for different values of tau.
-
         Parameters:
             tau_values: An array of tau values to iterate over.
             kappa: the social cost of carbon emitted by production of y in equilibrium
-
         Returns:
             A list of tuples containing tau values and their corresponding SWF values.
         """
@@ -308,10 +325,10 @@ class ProductionEconomy:
             self.tau = tau  # Set the new value of tau
             equilibrium_prices = self.market_clearing_prices()  # Recalculate prices for the current tau
             self.set_prices(*equilibrium_prices)  # Set the new prices for goods 1 and 2
-            optimal_l = self.maximize_utility() # Find the optimal labor supply given the new prices
+            optimal_l = self.maximize_utility()  # Find the optimal labor supply given the new prices
             if optimal_l is not None:  # Check if the optimization was successful
-                swf = self.calculate_swf(optimal_l, kappa) # Calculate the SWF
-                swf_values.append((tau, swf)) # Append the tau and SWF values to the list
+                swf = self.calculate_swf(optimal_l, kappa)  # Calculate the SWF
+                swf_values.append((tau, swf))  # Append the tau and SWF values to the list
 
         return swf_values
 
@@ -339,13 +356,17 @@ class ProductionEconomy:
         """
         self.tau = tau
         equilibrium_prices = self.market_clearing_prices()  # Recalculate prices for the current tau
+        if np.isnan(equilibrium_prices).any() or np.isinf(equilibrium_prices).any():
+            return np.inf  # Return a large value if prices are invalid
+
         self.set_prices(*equilibrium_prices)  # Set the new prices
         optimal_l = self.maximize_utility()
-        if optimal_l is not None:
+        if optimal_l is not None and optimal_l > 0 and not np.isnan(optimal_l) and not np.isinf(optimal_l):
             swf = self.calculate_swf(optimal_l, kappa)
-            return swf
-        else:
-            return np.inf  # Return a large value if the optimization fails
+            if not np.isnan(swf) and not np.isinf(swf):
+                return swf
+        return np.inf  # Return a large value if the optimization fails or SWF is invalid
+
 
     def find_optimal_tau(self, kappa, tau_bounds):
         """

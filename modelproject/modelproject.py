@@ -4,6 +4,7 @@ from IPython.display import display, Math, HTML
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 import numpy as np
+from ipywidgets import interactive, FloatSlider, IntSlider
 
 class IS_LM_model_analytical():
     """
@@ -52,6 +53,13 @@ class IS_LM_model_analytical():
         """
         Derives the IS and LM equations symbolically and prepares functions
         for calculating equilibrium values analytically.
+        
+        Defines symbols for the variables and parameters, constructs the IS and LM equations,
+        solves them symbolically for equilibrium values of output (Y) and interest rate (r),
+        and converts these solutions into Python functions for numerical calculation.
+        
+        Returns:
+            None
         """
         # Define symbols
         Y, r = symbols('Y r')
@@ -87,6 +95,9 @@ class IS_LM_model_analytical():
         Solves the IS-LM model analytically using the previously derived functions
         and updates the solution namespace with the equilibrium values of output (Y)
         and interest rate (r).
+        
+        Returns:
+            None
         """
         par = self.par
 
@@ -98,6 +109,9 @@ class IS_LM_model_analytical():
         """
         Displays the IS and LM equations in a formatted manner using LaTeX
         representation in Jupyter Notebooks.
+        
+        Returns:
+            None
         """
         IS_eq = self.IS_eq
         LM_eq = self.LM_eq
@@ -116,6 +130,9 @@ class IS_LM_model_analytical():
         """
         Prints the analytical solution for the equilibrium values of output (Y)
         and interest rate (r) in the IS-LM model.
+        
+        Returns:
+            None
         """
         sol = self.sol
         # Use HTML to make the text bold
@@ -194,6 +211,9 @@ class IS_LM_numerical():
         Parameters:
             initial_guess (list): A list of initial guesses [Y_initial, r_initial] for the
                                   numerical optimization algorithm.
+        
+        Returns:
+            None
         """
         par = self.par
 
@@ -219,7 +239,10 @@ class IS_LM_numerical():
     def print_solution(self):
         """
         Prints the calculated equilibrium values of output and interest rate using a
-        visually formatted output incl. the initial guesses used for the numerical optimization.
+        visually formatted output including the initial guesses used for the numerical optimization.
+        
+        Returns:
+            None
         """
         sol = self.sol
         initial_guess = self.initial_guess
@@ -231,7 +254,10 @@ class IS_LM_numerical():
     def print_solution_2(self):
         """
         Prints the calculated equilibrium values of output and interest rate using a
-        visually formatted output excl. the initial guesses used for the numerical optimization.
+        visually formatted output excluding the initial guesses used for the numerical optimization.
+        
+        Returns:
+            None
         """
         sol = self.sol
         initial_guess = self.initial_guess
@@ -241,7 +267,16 @@ class IS_LM_numerical():
     
     def plot_curves(self, Y_range, r_range, *params):
         """
-        Plots the numerical IS and LM curves for a given range of output (Y) and interest rate (r)
+        Plots the numerical IS and LM curves for a given range of output (Y) and interest rate (r).
+
+        Parameters:
+            Y_range (tuple): The range of output (Y) values as a tuple (Y_min, Y_max).
+            r_range (tuple): The range of interest rate (r) values as a tuple (r_min, r_max).
+            *params: Variable length parameter list, where each parameter set is a dictionary of
+                     parameter values to be updated in the model for plotting.
+
+        Returns:
+            None
         """
         Y_values = np.linspace(Y_range[0], Y_range[1], 100)
         plt.figure(figsize=(10, 7))
@@ -278,3 +313,140 @@ class IS_LM_numerical():
         plt.legend()
         plt.grid(True)
         plt.show()
+
+    def interactive_plot(self, Y_range=(1500, 2500), r_range=(0, 10), G_range=(100, 800, 50), M_range=(1000, 1500, 50), figsize=(12, 8)):
+        """
+        Creates an interactive plot with sliders for changing the parameters G and M.
+        
+        Parameters:
+            Y_range (tuple): The range of output (Y) values as a tuple (Y_min, Y_max).
+            r_range (tuple): The range of interest rate (r) values as a tuple (r_min, r_max).
+            G_range (tuple): The range of government spending (G) values as a tuple (G_min, G_max, step).
+            M_range (tuple): The range of money supply (M) values as a tuple (M_min, M_max, step).
+            figsize (tuple): The size of the figure (width, height).
+        
+        Returns:
+            None
+        """
+        def plot_interactive_IS_LM(G, M):
+            """
+            Plots the IS-LM curves interactively for given values of G and M.
+            
+            Parameters:
+                G (float): Government spending
+                M (float): Money supply
+            
+            Returns:
+                None
+            """
+            self.par.G = G
+            self.par.M = M
+            
+            Y_values = np.linspace(Y_range[0], Y_range[1], 100)
+            plt.figure(figsize=figsize)  # Set the figure size
+
+            # Calculate IS and LM curves
+            IS_curve = [(self.par.a + self.par.c + self.par.G - (1 - self.par.b) * Y - self.par.b * self.tax_function(Y)) / self.par.d for Y in Y_values]
+            LM_curve = [(self.par.e * Y - self.par.M / self.par.P) / self.par.f for Y in Y_values]
+
+            # Solve numerically for the intersection
+            self.solve_IS_LM_numerically()
+            sol_Y = self.sol.Y
+            sol_r = self.sol.r
+
+            plt.plot(Y_values, IS_curve, color='red', label='IS Curve')
+            plt.plot(Y_values, LM_curve, color='blue', label='LM Curve')
+
+            # Plot the intersection point
+            plt.scatter(sol_Y, sol_r, color='black', s=100, zorder=5)
+
+            # Add the legend
+            plt.legend()
+
+            # Add equilibrium values text in a fixed position (top left corner)
+            plt.text(0.05, 0.95, f'Equilibrium: Y = {sol_Y:.2f}, r = {sol_r:.2f}', fontsize=12, ha='left', va='top', transform=plt.gca().transAxes)
+
+            plt.title('IS-LM Curves')
+            plt.xlabel('Output (Y)')
+            plt.ylabel('Interest Rate (r)')
+            plt.xlim(Y_range[0], Y_range[1])
+            plt.ylim(r_range[0], r_range[1])
+            plt.grid(True)
+            plt.show()
+
+        # Create interactive widgets for G and M
+        interactive_plot = interactive(plot_interactive_IS_LM, 
+                                    G=IntSlider(min=G_range[0], max=G_range[1], step=G_range[2], value=self.par.G, description='G'),
+                                    M=IntSlider(min=M_range[0], max=M_range[1], step=M_range[2], value=self.par.M, description='M'))
+        output = interactive_plot.children[-1]
+        output.layout.height = '700px'  # Set the output height
+        display(interactive_plot)
+
+
+    def interactive_plot_with_proportional_tax(self, Y_range=(1500, 2500), r_range=(0, 10), G_range=(100, 800, 50), M_range=(1000, 1500, 50), figsize=(12, 8)):
+        """
+        Creates an interactive plot with sliders for changing the parameters G and M for the model with proportional tax.
+        
+        Parameters:
+            Y_range (tuple): The range of output (Y) values as a tuple (Y_min, Y_max).
+            r_range (tuple): The range of interest rate (r) values as a tuple (r_min, r_max).
+            G_range (tuple): The range of government spending (G) values as a tuple (G_min, G_max, step).
+            M_range (tuple): The range of money supply (M) values as a tuple (M_min, M_max, step).
+            figsize (tuple): The size of the figure (width, height).
+        
+        Returns:
+            None
+        """
+        def plot_interactive_IS_LM(G, M):
+            """
+            Plots the IS-LM curves interactively for given values of G and M.
+            
+            Parameters:
+                G (float): Government spending
+                M (float): Money supply
+            
+            Returns:
+                None
+            """
+            self.par.G = G
+            self.par.M = M
+            
+            Y_values = np.linspace(Y_range[0], Y_range[1], 100)
+            plt.figure(figsize=figsize)  # Set the figure size
+
+            # Calculate IS and LM curves
+            IS_curve = [(self.par.a + self.par.c + self.par.G - (1 - self.par.b) * Y - self.par.b * self.tax_function(Y)) / self.par.d for Y in Y_values]
+            LM_curve = [(self.par.e * Y - self.par.M / self.par.P) / self.par.f for Y in Y_values]
+
+            # Solve numerically for the intersection
+            self.solve_IS_LM_numerically()
+            sol_Y = self.sol.Y
+            sol_r = self.sol.r
+
+            plt.plot(Y_values, IS_curve, color='red', label='IS Curve')
+            plt.plot(Y_values, LM_curve, color='blue', label='LM Curve')
+
+            # Plot the intersection point
+            plt.scatter(sol_Y, sol_r, color='black', s=100, zorder=5)
+
+            # Add the legend
+            plt.legend()
+
+            # Add equilibrium values text in a fixed position (top left corner)
+            plt.text(0.05, 0.95, f'Equilibrium: Y = {sol_Y:.2f}, r = {sol_r:.2f}', fontsize=12, ha='left', va='top', transform=plt.gca().transAxes)
+
+            plt.title('IS-LM Curves with Proportional Tax')
+            plt.xlabel('Output (Y)')
+            plt.ylabel('Interest Rate (r)')
+            plt.xlim(Y_range[0], Y_range[1])
+            plt.ylim(r_range[0], r_range[1])
+            plt.grid(True)
+            plt.show()
+
+        # Create interactive widgets for G and M
+        interactive_plot = interactive(plot_interactive_IS_LM, 
+                                   G=IntSlider(min=G_range[0], max=G_range[1], step=G_range[2], value=self.par.G, description='G'),
+                                   M=IntSlider(min=M_range[0], max=M_range[1], step=M_range[2], value=self.par.M, description='M'))
+        output = interactive_plot.children[-1]
+        output.layout.height = '700px'  # Set the output height
+        display(interactive_plot)
